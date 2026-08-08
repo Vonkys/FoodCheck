@@ -1,0 +1,1911 @@
+<!DOCTYPE html>
+
+<html lang="cs">
+<head>
+<meta charset="utf-8"/>
+<title>EasyCook</title>
+<meta content="width=device-width,initial-scale=1" name="viewport"/>
+<style>
+    body { font-family: 'Segoe UI', Arial, sans-serif; background: #e8f1fa; color: #1c2430; margin: 0; padding: 0; min-height: 100vh;}
+    .container { max-width: 1100px; margin: 34px auto; background: #fff; border-radius: 18px; box-shadow: 0 4px 24px 0 #2366a210, 0 1px 6px 0 #459cff16; padding: 26px 12px 30px 12px;}
+    .hero-panel { background: linear-gradient(102deg, #d7eefd 70%, #bee4f7 100%); border-radius: 16px; box-shadow: 0 1px 9px 0 #4cbcff22; padding: 25px 10px 15px 10px; margin-bottom: 28px; text-align: center; position: relative;}
+    .talir-emoji { font-size: 3.5em; margin-bottom: 8px; margin-top: 0; display: block; text-align: center; filter: drop-shadow(0 1px 6px #abe8ff40);}
+    h1 { font-size: 2.1em; color: #2070bb; margin-bottom: 0; margin-top: 6px; font-weight: 900; letter-spacing: 0.01em; text-shadow: 0 2px 8px #95d1ff40;}
+    .actions-panel { background: linear-gradient(120deg, #b4d2e4 60%, #7dc6a4 100%); border-radius: 16px; box-shadow: 0 2px 16px 0 #497e9855; padding: 18px 14px 18px 14px; margin-bottom: 30px; display: flex; flex-direction: column; gap: 0;}
+    .main-actions { display: flex; gap: 22px; justify-content: center; align-items: center; margin-bottom: 7px; flex-wrap: wrap;}
+    .btn-db, .btn-add { font-size: 1.13em; font-weight: 600; padding: 13px 26px; border-radius: 36px; border: none; cursor: pointer; transition: background 0.16s, box-shadow 0.14s; box-shadow: 0 2px 12px 0 #459cff24; background: #1663b2; color: #fff; border: 2px solid #1663b2; display: inline-flex; align-items: center; gap: 10px; outline: none;}
+    .btn-db:hover, .btn-db:focus, .btn-add:hover, .btn-add:focus { background: #104070; border-color: #58c6fa;}
+    .gen-row { display: flex; justify-content: center; margin: 18px 0 10px 0;}
+    .btn-gen { font-size: 1.32em; font-weight: bold; padding: 20px 62px; border-radius: 44px; border: none; background: #28a745; color: #fff; box-shadow: 0 4px 24px 0 #43d19e55, 0 1px 8px 0 #33333318; letter-spacing: 0.5px; transition: background 0.18s, box-shadow 0.15s; border: 3px solid #24913c; display: inline-flex; align-items: center; gap: 16px; justify-content: center; min-width: 270px; text-align: center;}
+    .btn-gen:hover, .btn-gen:focus { background: #1c7d31; border-color: #65e09c; box-shadow: 0 6px 26px 0 #28a74555, 0 2px 12px 0 #28a74544; color: #d9ffe9;}
+    .group-backup-row {
+  display: none !important;
+}
+    .group-backup button, .group-backup label { width: 120px; height: 36px; font-size: 0.99em; border-radius: 18px; border: none; box-shadow: 0 1px 6px #1a78c611; background: #ededf9; color: #3b3b55; border: 2px solid #d6e7f4; font-weight: 500; transition: background 0.15s, color 0.13s, border 0.13s; outline: none; cursor: pointer; display: flex; align-items: center; justify-content: center; text-align: center; padding: 0; margin: 0;}
+    .group-backup .btn-backup      { background: #f34f4f; color: #fff; border-color: #f34f4f;}
+    .group-backup .btn-backup:hover, .group-backup .btn-backup:focus { background: #c92121; border-color: #ffbaba; }
+    .group-backup .btn-restore      { background: #54b6fa; color: #fff; border-color: #54b6fa;}
+    .group-backup .btn-restore:hover, .group-backup .btn-restore:focus { background: #1a78c6; color:#fff; border-color:#80d8ff; }
+    .group-backup .btn-txt          { background: #c17cff; color: #fff; border-color: #c17cff;}
+    .group-backup .btn-txt:hover, .group-backup .btn-txt:focus { background: #9347c7; border-color: #e6ccfa; }
+    label.btn-restore { padding: 0; width: 120px; height: 36px; display: flex; align-items: center; justify-content: center;}
+    label input[type="file"] { display: none; }
+    .jidla-table-wrap { border-radius: 17px; background: #fafdff; box-shadow: 0 2px 12px 0 #2196f322; padding: 7px 5px 3px 5px; margin-bottom: 20px; border: 2px solid #dbeeff; overflow-x:auto;}
+    table.jidla-table { width: 100%; border-collapse: separate; border-spacing: 0; background: none; min-width: 375px;}
+    table.jidla-table th { background: #eaf3fa; font-weight: 800; font-size: 1.06em; padding: 10px 8px; border-bottom: 2.5px solid #c4e0fb; text-align: left; letter-spacing: 0.03em;}
+    table.jidla-table td { padding: 8px 7px; border-bottom: 1px solid #e3e9f2; vertical-align: middle; font-size: 1.08em; transition: background 0.13s;}
+    table.jidla-table tbody tr:hover { background: #eaf5ff70; box-shadow: 0 1px 6px #2196f330;}
+    table.jidla-table tr:last-child td { border-bottom: none; }
+    .category-label { display: inline-block; padding: 6px 17px 6px 15px; border-radius: 16px; font-size: 1em; font-weight:600; text-align: center; background: linear-gradient(90deg,#e4f3ff 70%,#fffbe6 100%); color: #1a78c6; border:1.5px solid #95d1ff; margin-right: 6px; box-shadow: 0 2px 8px 0 #b6dfff1a; white-space: nowrap; letter-spacing: 0.02em;}
+    .cat-Bezmasá   { background: linear-gradient(90deg,#c5fad2 70%,#fff 100%); color: #116f24; border:1.5px solid #72dd87;}
+    .cat-Omáčky    { background: linear-gradient(90deg,#d0e7ff 70%,#fff 100%); color: #134a85; border:1.5px solid #8ab7ec;}
+    .cat-Ostatní   { background: linear-gradient(90deg,#ffe7b0 70%,#fff 100%); color: #9c6a09; border:1.5px solid #ffd040;}
+    .cat-Smažená   { background: linear-gradient(90deg,#ffe2f1 70%,#fff 100%); color: #af1590; border:1.5px solid #e49be1;}
+    .cat-Polévky   { background: linear-gradient(90deg,#f5fbc4 70%,#fff 100%); color: #617308; border:1.5px solid #e0ea6a;}
+    .category-label:not([class*='cat-']) { background: #e3e6eb; color: #445; border:1.5px solid #bcc0c9;}
+    .action-btns { display: flex; gap: 7px;}
+    .action-btns button { padding: 6px 15px; font-size: 1em; border-radius: 13px; background: #e7f2ff; color: #2061c3; border: 1.5px solid #8ab7ec; transition: background 0.15s, color 0.13s; cursor: pointer; font-weight: 600; box-shadow: 0 2px 6px #2196f312;}
+    .action-btns button:hover { background: #cbe8ff; color: #1456aa; border-color: #54b6fa;}
+    .action-btns button:last-child { background: #ffe4e6; color: #af2828; border-color: #f9a7a7;}
+    .action-btns button:last-child:hover { background: #ffc9d0; color: #a51b1b; border-color: #fc6e8c;}
+    .table-filters { display: flex; align-items: center; gap: 15px; margin-bottom: 8px; flex-wrap: wrap;}
+    .table-filters label { font-size: 1.09em; font-weight: 600; color: #2462b4; letter-spacing: 0.01em;}
+    .table-filters select { font-size: 1.05em; border-radius: 8px; border: 1px solid #a7cffa; padding: 6px 16px; background: #f4faff;}
+    .table-filters button { margin-left: auto; background: #f0f4fa; color: #3475b9; border: 1.5px solid #afd4f7; padding: 7px 18px; border-radius: 12px; font-weight: 500; transition: background 0.12s, color 0.12s;}
+    .table-filters button:hover { background: #e7f2ff; color: #174176; border-color: #6db4f9;}
+    .menu-block { max-width: 600px; margin: 0 auto 18px auto; background: #eaf3fa; border-radius: 14px; box-shadow: 0 2px 12px 0 #bae3ff22; padding: 14px 12px 10px 14px; border: 2px solid #b4e6ff;}
+    .menu-label { font-weight: bold; margin-bottom: 7px; color: #1960b3; font-size: 1.12em; letter-spacing: 0.02em; text-align: center;}
+    .vysledky-menu { display: flex; flex-direction: column; gap: 18px; }
+    @media (min-width: 600px) {
+      .vysledky-menu { flex-direction: row; justify-content: center; gap: 32px;}
+      .menu-block {min-width: 260px;}
+    }
+    .menu-block ol, .menu-block ul { margin: 0 0 0 19px; padding: 0;}
+    .menu-block li { margin-bottom: 3px; font-size: 1.04em; padding-left: 2px;}
+    @media (max-width:600px) {
+      .container {padding: 4vw 0.5vw;}
+      .main-actions button, .main-actions label { font-size: 1em; padding: 10px 14px; }
+      h1 { font-size: 1.25em;}
+      .hero-panel { padding: 13px 3px 9px 3px; }
+      .actions-panel { padding: 7px 2px 6px 2px; }
+      .btn-gen { min-width: unset; padding: 14px 5vw; font-size: 1em;}
+      .group-backup button, .group-backup label { width: 85px; height: 33px; font-size: 0.93em;}
+      .group-backup-row { margin-left:0; gap:7px;}
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+<div class="hero-panel">
+<div class="talir-emoji">🍲</div>
+
+<h1>FoodCheck</h1>
+</div>
+<div class="group-backup-row">
+<div class="group-backup">
+<button class="btn-backup" id="btn-download-db">📀 Uložit</button>
+<label class="btn-restore" for="file-upload">📼 Vložit<input accept=".json" id="file-upload" type="file"/></label>
+<button class="btn-txt" id="btn-import-txt">📝 Text</button>
+<input accept=".txt" id="txt-upload" style="display:none;" type="file"/>
+</div>
+<div style="margin-left:auto; display:flex; align-items:end; height:36px; padding-right:10px;">
+  <div style="background:#f0f7ff; border:1px solid #a8c8e6; border-radius:10px; padding:3px 10px; box-shadow: 0 2px 6px #a6d3ff55;">
+    <script type="text/javascript">
+    var sc_project=13137078; 
+    var sc_invisible=0; 
+    var sc_security="d35be5ab"; 
+    var scJsHost = "https://";
+    document.write("<sc"+"ript type='text/javascript' src='" + scJsHost+
+    "statcounter.com/counter/counter.js'></"+"script>");
+    </script>
+    <noscript>
+      <div class="statcounter">
+        <a title="Web Analytics" href="https://statcounter.com/" target="_blank">
+          <img class="statcounter" src="https://c.statcounter.com/13137078/0/d35be5ab/0/"
+               alt="Web Analytics" referrerPolicy="no-referrer-when-downgrade"
+               style="height:32px; vertical-align:middle;">
+        </a>
+      </div>
+    </noscript>
+  </div>
+</div>
+
+</div>
+</div>
+<div id="main-content"></div>
+</div>
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-auth.js";
+import {getFirestore,collection,addDoc,getDocs,getDoc,doc,setDoc,updateDoc,deleteDoc,query,where} from "https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js";
+const firebaseConfig = {
+  apiKey: "AIzaSyCX9KtcPeWWHn8-zxB2GyyrN4AltkvkHjE",
+  authDomain: "quickcook-498e4.firebaseapp.com",
+  projectId: "quickcook-498e4",
+  storageBucket: "quickcook-498e4.firebasestorage.app",
+  messagingSenderId: "656166175905",
+  appId: "1:656166175905:web:6eb01f50b60d7e42aa9ce0"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+let currentUser = null;
+let currentUserRole = null;
+
+onAuthStateChanged(auth, async (user) => {
+  currentUser = user;
+
+  if (!user) {
+    currentUserRole = null;
+    renderLogin();
+    return;
+  }
+
+  try {
+    const userDoc = await getDoc(doc(db, 'users', user.uid));
+
+    if (userDoc.exists()) {
+      currentUserRole = userDoc.data().role || 'user';
+    } else {
+      currentUserRole = 'user';
+    }
+  } catch (error) {
+    console.error('CHYBA NAČTENÍ PROFILU:', error);
+    currentUserRole = 'user';
+  }
+
+  window.renderMain();
+  await inicializujJidla();
+});
+
+
+let lastFilterKategorie = '';
+const STORAGE_KEY = 'jidlaDatabaze';
+let jidla = [];
+let lastScrollTop = 0;
+
+async function inicializujJidla() {
+  try {
+    const snapshot = await getDocs(collection(db, 'jidla'));
+
+    // Pokud už jsou jídla ve Firestore, načteme je
+    if (!snapshot.empty) {
+      jidla = snapshot.docs.map(docSnap => ({
+        id: docSnap.id,
+        nazev: docSnap.data().nazev,
+        kategorie: docSnap.data().kategorie
+      }));
+
+      console.log('Jídla načtena z Firestore:', jidla.length);
+
+      window.renderMain();
+      return;
+    }
+
+    // Firestore je prázdný – zkusíme starou lokální databázi
+    const lokalniData = localStorage.getItem(STORAGE_KEY);
+
+    if (lokalniData) {
+      try {
+        const staraJidla = JSON.parse(lokalniData);
+
+        if (Array.isArray(staraJidla) && staraJidla.length > 0) {
+          jidla = staraJidla;
+
+          console.log('Načtena stará lokální databáze jídel:', jidla.length);
+
+          // Pouze admin ji převede do Firestore
+          if (currentUserRole === 'admin') {
+            await saveJidla();
+            console.log('Stará databáze jídel byla převedena do Firestore.');
+          }
+
+          window.renderMain();
+          return;
+        }
+      } catch (e) {
+        console.error('CHYBA ČTENÍ LOKÁLNÍ DATABÁZE:', e);
+      }
+    }
+
+    // Není nic ani lokálně
+    jidla = [];
+
+    console.log('Databáze jídel je prázdná.');
+
+    window.renderMain();
+
+  } catch (error) {
+    console.error('CHYBA NAČÍTÁNÍ JÍDEL:', error);
+    alert('❌ Jídla se nepodařilo načíst z online databáze.');
+    jidla = [];
+    window.renderMain();
+  }
+}
+
+async function saveJidla() {
+  try {
+    const snapshot = await getDocs(collection(db, 'jidla'));
+
+    for (const item of snapshot.docs) {
+      await deleteDoc(item.ref);
+    }
+
+    for (const jidlo of jidla) {
+      await addDoc(collection(db, 'jidla'), {
+        nazev: jidlo.nazev,
+        kategorie: jidlo.kategorie
+      });
+    }
+
+    console.log('Jídla uložena do Firestore.');
+  } catch (error) {
+    console.error('CHYBA UKLÁDÁNÍ JÍDEL:', error);
+    alert('❌ Jídla se nepodařilo uložit do online databáze.');
+  }
+}
+
+function downloadDb() {
+  const data = JSON.stringify(jidla, null, 2);
+  const blob = new Blob([data], {type: "application/json"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'zaloha_jidla.json';
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => {
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }, 100);
+}
+function importDb(file) {
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const newData = JSON.parse(e.target.result);
+      if (Array.isArray(newData)) {
+        jidla = newData;
+        saveJidla();
+        msg('Databáze úspěšně načtena.');
+        window.renderMain();
+      } else {
+        alert('Soubor nemá správný formát!');
+      }
+    } catch {
+      alert('Chyba při načítání souboru!');
+    }
+  };
+  reader.readAsText(file);
+}
+
+document.getElementById('btn-import-txt').onclick = () => {
+  document.getElementById('txt-upload').value = "";
+  document.getElementById('txt-upload').click();
+};
+
+document.getElementById('txt-upload').onchange = function(e) {
+  if (e.target.files && e.target.files[0]) {
+    const file = e.target.files[0];
+    const reader = new FileReader();
+    reader.onload = function(ev) {
+      let lines = ev.target.result.split(/\r?\n/).map(l=>l.trim()).filter(Boolean);
+      if (!lines.length) { msg('Soubor je prázdný!'); return; }
+      let kategorie = prompt('Zadej kategorii pro importovaná jídla:');
+      if (!kategorie) { msg('Import zrušen.'); return; }
+      let pridano = 0, preskoceno = 0;
+      let existujiciNazvy = new Set(jidla.map(j=>j.nazev.toLowerCase()));
+      for (let nazev of lines) {
+        if (existujiciNazvy.has(nazev.toLowerCase())) { preskoceno++; continue; }
+        jidla.push({ nazev: nazev, kategorie: kategorie });
+        pridano++;
+        existujiciNazvy.add(nazev.toLowerCase());
+      }
+      saveJidla();
+      msg(`Importováno: ${pridano}, přeskočeno: ${preskoceno}`);
+      window.renderMain();
+    };
+    reader.readAsText(file);
+  }
+};
+
+function getKategorie() {
+  const vse = jidla.map(j => j.kategorie);
+  return Array.from(new Set(vse));
+}
+
+function msg(text) {
+  const div = document.createElement('div');
+  div.className = 'msg';
+  div.innerText = text;
+  document.getElementById('main-content').prepend(div);
+  setTimeout(()=>div.remove(), 2200);
+}
+
+window.pridatDoJidelnicku = async function(jidlo) {
+  if (currentUserRole !== 'admin') {
+    alert('Tuto akci může provést pouze administrátor.');
+    return;
+  }
+
+  const datum = await new Promise(resolve => {
+
+    const overlay = document.createElement('div');
+
+    overlay.style.cssText = `
+      position:fixed;
+      inset:0;
+      background:rgba(0,0,0,0.45);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      z-index:99999;
+    `;
+
+    overlay.innerHTML = `
+      <div style="
+        background:white;
+        padding:25px;
+        border-radius:18px;
+        width:320px;
+        max-width:90%;
+        text-align:center;
+        box-shadow:0 6px 30px rgba(0,0,0,0.3);
+      ">
+
+        <h3 style="
+          margin-top:0;
+          color:#1960b3;
+        ">
+          📅 Přidat do jídelníčku
+        </h3>
+
+        <p style="margin-bottom:18px;">
+          <strong>${escapeHtml(jidlo.nazev)}</strong>
+        </p>
+
+        <label style="
+          display:block;
+          margin-bottom:18px;
+          font-weight:600;
+        ">
+          Vyber datum:
+
+          <input
+            type="date"
+            id="jidelnicek-datum"
+            style="
+              display:block;
+              width:100%;
+              box-sizing:border-box;
+              margin-top:8px;
+              padding:10px;
+              border:1px solid #a7cffa;
+              border-radius:9px;
+              font-size:16px;
+            "
+          >
+        </label>
+
+        <button
+          id="potvrdit-datum"
+          style="
+            padding:11px 22px;
+            border:0;
+            border-radius:10px;
+            background:#28a745;
+            color:white;
+            font-weight:bold;
+            cursor:pointer;
+            margin-right:6px;
+          "
+        >
+          ✅ Přidat
+        </button>
+
+        <button
+          id="zrusit-datum"
+          style="
+            padding:11px 22px;
+            border:0;
+            border-radius:10px;
+            background:#d9534f;
+            color:white;
+            font-weight:bold;
+            cursor:pointer;
+          "
+        >
+          ❌ Zrušit
+        </button>
+
+      </div>
+    `;
+
+    document.body.appendChild(overlay);
+
+    const input = overlay.querySelector('#jidelnicek-datum');
+
+    // Dnešek jako výchozí datum
+    const dnes = new Date();
+    const rok = dnes.getFullYear();
+    const mesic = String(dnes.getMonth() + 1).padStart(2, '0');
+    const den = String(dnes.getDate()).padStart(2, '0');
+
+    input.value = `${rok}-${mesic}-${den}`;
+
+    overlay.querySelector('#potvrdit-datum').onclick = () => {
+      const vybraneDatum = input.value;
+
+      if (!vybraneDatum) {
+        alert('Vyber datum.');
+        return;
+      }
+
+      overlay.remove();
+      resolve(vybraneDatum);
+    };
+
+    overlay.querySelector('#zrusit-datum').onclick = () => {
+      overlay.remove();
+      resolve(null);
+    };
+
+    input.focus();
+  });
+
+  if (!datum) return;
+
+  try {
+    await addDoc(collection(db, 'jidelnicky'), {
+      datum: datum,
+      jidloId: jidlo.id || '',
+      nazev: jidlo.nazev,
+      kategorie: jidlo.kategorie,
+      vytvorilUid: currentUser.uid,
+      vytvorilEmail: currentUser.email,
+      vytvoreno: new Date().toISOString()
+    });
+
+    msg(`✅ ${jidlo.nazev} bylo přidáno do jídelníčku na ${datum}.`);
+  } catch (error) {
+    console.error('CHYBA JÍDELNÍČKU:', error);
+    alert('❌ Jídlo se nepodařilo přidat do jídelníčku.');
+  }
+}
+
+async function nactiJidelnicek() {
+  const container = document.getElementById('jidelnicek-data');
+
+  if (!container) return;
+
+  try {
+    const snapshot = await getDocs(collection(db, 'jidelnicky'));
+
+        // Načteme objednávky aktuálního uživatele
+    const objednavkySnapshot = await getDocs(
+      query(
+        collection(db, 'objednavky'),
+        where('uid', '==', currentUser.uid)
+      )
+    );
+
+    // ID jídelníčků, které už uživatel objednal
+    const objednaneJidelnicky = new Set(
+      objednavkySnapshot.docs.map(docSnap => docSnap.data().jidelnicekId)
+    );
+    
+    if (snapshot.empty) {
+      container.innerHTML = `
+        <div style="
+          padding:15px;
+          background:#eef8ff;
+          border-radius:10px;
+          text-align:center;
+        ">
+          📅 Zatím nebyl vytvořen žádný jídelníček.
+        </div>
+      `;
+      return;
+    }
+
+    const jidelnicky = snapshot.docs.map(docSnap => ({
+      id: docSnap.id,
+      ...docSnap.data()
+    }));
+
+    // Seřadíme podle data
+    jidelnicky.sort((a, b) => {
+      return String(a.datum).localeCompare(String(b.datum));
+    });
+
+    // Rozdělení podle dnů
+    const podleDni = {};
+
+    jidelnicky.forEach(jidlo => {
+      if (!podleDni[jidlo.datum]) {
+        podleDni[jidlo.datum] = [];
+      }
+
+      podleDni[jidlo.datum].push(jidlo);
+    });
+
+    let html = '';
+
+    Object.keys(podleDni).forEach(datum => {
+
+      const [rok, mesic, den] = datum.split('-');
+
+      const datumText = `${den}.${mesic}.${rok}`;
+
+      html += `
+        <div style="
+          margin-bottom:20px;
+          padding:15px;
+          background:#f7fbff;
+          border:1px solid #cfe8fa;
+          border-radius:12px;
+        ">
+
+          <h4 style="
+            margin:0 0 12px 0;
+            color:#1960b3;
+            font-size:19px;
+          ">
+            📅 ${datumText}
+          </h4>
+      `;
+
+      podleDni[datum].forEach(jidlo => {
+
+        html += `
+          <div style="
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:15px;
+  padding:10px;
+  margin-top:7px;
+  background:white;
+  border-radius:9px;
+  border:1px solid #e2edf7;
+">
+
+  <div style="flex:1;">
+    <strong style="font-size:17px;">
+      ${jidlo.nazev || 'Bez názvu'}
+    </strong>
+
+    <div style="
+      font-size:14px;
+      color:#666;
+      margin-top:3px;
+    ">
+      ${jidlo.kategorie || ''}
+    </div>
+  </div>
+
+             ${
+        currentUserRole === 'user'
+          ? `
+            <button
+              class="btn-objednat"
+              data-id="${jidlo.id}"
+              style="
+                padding:10px 14px;
+                border:0;
+                border-radius:10px;
+                background:${objednaneJidelnicky.has(jidlo.id) ? '#6c757d' : '#28a745'};
+                color:white;
+                font-weight:bold;
+                cursor:pointer;
+                white-space:nowrap;
+              "
+            >
+              ${objednaneJidelnicky.has(jidlo.id) ? '✅ Objednáno' : '🍽️ Objednat'}
+            </button>
+          `
+          : `
+            <div style="display:flex;gap:7px;flex-wrap:wrap;">
+              <button
+                onclick="upravitJidelnicek('${jidlo.id}')"
+                style="
+                  padding:9px 12px;
+                  border:0;
+                  border-radius:9px;
+                  background:#1663b2;
+                  color:white;
+                  font-weight:bold;
+                  cursor:pointer;
+                "
+              >
+                ✏️ Upravit
+              </button>
+
+              <button
+                onclick="smazatJidelnicek('${jidlo.id}')"
+                style="
+                  padding:9px 12px;
+                  border:0;
+                  border-radius:9px;
+                  background:#d9534f;
+                  color:white;
+                  font-weight:bold;
+                  cursor:pointer;
+                "
+              >
+                🗑️ Smazat
+              </button>
+            </div>
+          `
+      }
+
+</div>
+        `;
+      });
+
+      html += `</div>`;
+    });
+
+    container.innerHTML = html;
+
+    container.querySelectorAll('.btn-objednat').forEach(button => {
+    button.onclick = async () => {
+
+      const jidelnicekId = button.dataset.id;
+
+      const jidlo = jidelnicky.find(j => j.id === jidelnicekId);
+
+      if (!jidlo) {
+        console.error('Jídlo nebylo nalezeno:', jidelnicekId);
+        alert('❌ Jídlo se nepodařilo najít.');
+        return;
+      }
+
+      const uzJeObjednano = objednaneJidelnicky.has(jidelnicekId);
+
+      // =========================
+      // ZRUŠENÍ OBJEDNÁVKY
+      // =========================
+
+      if (uzJeObjednano) {
+
+        const potvrdit = confirm(
+          `Zrušit objednávku "${jidlo.nazev}" na ${jidlo.datum}?`
+        );
+
+        if (!potvrdit) {
+          return;
+        }
+
+        try {
+
+          button.disabled = true;
+          button.innerText = '⏳ Ruším...';
+
+          const objednavkaId = `${currentUser.uid}_${jidlo.id}`;
+
+          await deleteDoc(
+            doc(db, 'objednavky', objednavkaId)
+          );
+
+          objednaneJidelnicky.delete(jidelnicekId);
+
+          button.innerText = '🍽️ Objednat';
+          button.style.background = '#28a745';
+          button.style.cursor = 'pointer';
+          button.disabled = false;
+
+          msg(`✅ Objednávka "${jidlo.nazev}" byla zrušena.`);
+
+        } catch (error) {
+
+          console.error('CHYBA RUŠENÍ OBJEDNÁVKY:', error);
+
+          alert('❌ Objednávku se nepodařilo zrušit.');
+
+          button.innerText = '✅ Objednáno';
+          button.style.background = '#6c757d';
+          button.style.cursor = 'default';
+          button.disabled = true;
+        }
+
+        return;
+      }
+
+      // =========================
+      // NOVÁ OBJEDNÁVKA
+      // =========================
+
+      button.disabled = true;
+      button.innerText = '⏳ Ukládám...';
+
+      const uspesne = await window.objednatJidlo(jidlo);
+
+            if (uspesne) {
+
+        objednaneJidelnicky.add(jidelnicekId);
+
+        button.innerText = '✅ Objednáno';
+        button.style.background = '#6c757d';
+        button.style.cursor = 'pointer';
+        button.disabled = false;
+
+      } else {
+
+        button.innerText = '🍽️ Objednat';
+        button.disabled = false;
+      }
+    };
+  });
+  
+  } catch (error) {
+    console.error('CHYBA NAČTENÍ JÍDELNÍČKU:', error);
+
+    container.innerHTML = `
+      <div style="
+        padding:15px;
+        background:#ffecec;
+        border:1px solid #ffb5b5;
+        border-radius:10px;
+        text-align:center;
+        color:#b00000;
+      ">
+        ❌ Jídelníček se nepodařilo načíst.
+      </div>
+    `;
+  }
+}
+
+window.upravitJidelnicek = async function(jidelnicekId) {
+
+  if (currentUserRole !== 'admin') {
+    alert('Tuto akci může provést pouze administrátor.');
+    return;
+  }
+
+  try {
+
+    const jidelnicekRef = doc(db, 'jidelnicky', jidelnicekId);
+    const jidelnicekDoc = await getDoc(jidelnicekRef);
+
+    if (!jidelnicekDoc.exists()) {
+      alert('❌ Položka jídelníčku nebyla nalezena.');
+      return;
+    }
+
+    const puvodni = jidelnicekDoc.data();
+
+    const overlay = document.createElement('div');
+
+    overlay.style.cssText = `
+      position:fixed;
+      inset:0;
+      background:rgba(0,0,0,0.45);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      z-index:99999;
+    `;
+
+    overlay.innerHTML = `
+      <div style="
+        background:white;
+        padding:25px;
+        border-radius:18px;
+        width:360px;
+        max-width:90%;
+        box-shadow:0 6px 30px rgba(0,0,0,0.3);
+      ">
+
+        <h3 style="
+          margin-top:0;
+          color:#1960b3;
+          text-align:center;
+        ">
+          ✏️ Upravit jídelníček
+        </h3>
+
+        <label style="display:block;margin-bottom:15px;font-weight:600;">
+          Jídlo:
+
+          <select
+            id="edit-jidelnicek-jidlo"
+            style="
+              display:block;
+              width:100%;
+              box-sizing:border-box;
+              margin-top:7px;
+              padding:10px;
+              border:1px solid #a7cffa;
+              border-radius:9px;
+              font-size:16px;
+            "
+          >
+            ${jidla
+              .slice()
+              .sort((a,b) => a.nazev.localeCompare(b.nazev,'cs'))
+              .map(j => `
+                <option
+                  value="${j.id}"
+                  ${j.id === puvodni.jidloId ? 'selected' : ''}
+                >
+                  ${escapeHtml(j.nazev)}
+                </option>
+              `)
+              .join('')}
+          </select>
+        </label>
+
+        <label style="display:block;margin-bottom:20px;font-weight:600;">
+          Datum:
+
+          <input
+            type="date"
+            id="edit-jidelnicek-datum"
+            value="${puvodni.datum || ''}"
+            style="
+              display:block;
+              width:100%;
+              box-sizing:border-box;
+              margin-top:7px;
+              padding:10px;
+              border:1px solid #a7cffa;
+              border-radius:9px;
+              font-size:16px;
+            "
+          >
+        </label>
+
+        <div style="text-align:center;">
+
+          <button
+            id="edit-jidelnicek-save"
+            style="
+              padding:11px 20px;
+              border:0;
+              border-radius:10px;
+              background:#28a745;
+              color:white;
+              font-weight:bold;
+              cursor:pointer;
+              margin-right:6px;
+            "
+          >
+            💾 Uložit
+          </button>
+
+          <button
+            id="edit-jidelnicek-cancel"
+            style="
+              padding:11px 20px;
+              border:0;
+              border-radius:10px;
+              background:#d9534f;
+              color:white;
+              font-weight:bold;
+              cursor:pointer;
+            "
+          >
+            ❌ Zrušit
+          </button>
+
+        </div>
+
+      </div>
+    `;
+
+    document.body.appendChild(overlay);
+
+    overlay.querySelector('#edit-jidelnicek-cancel').onclick = () => {
+      overlay.remove();
+    };
+
+    overlay.querySelector('#edit-jidelnicek-save').onclick = async () => {
+
+      const noveJidloId =
+        overlay.querySelector('#edit-jidelnicek-jidlo').value;
+
+      const noveDatum =
+        overlay.querySelector('#edit-jidelnicek-datum').value;
+
+      if (!noveJidloId || !noveDatum) {
+        alert('Vyber jídlo i datum.');
+        return;
+      }
+
+      const noveJidlo = jidla.find(j => j.id === noveJidloId);
+
+      if (!noveJidlo) {
+        alert('❌ Vybrané jídlo nebylo nalezeno.');
+        return;
+      }
+
+      try {
+
+        await updateDoc(jidelnicekRef, {
+          datum: noveDatum,
+          jidloId: noveJidlo.id,
+          nazev: noveJidlo.nazev,
+          kategorie: noveJidlo.kategorie
+        });
+
+        // Aktualizujeme případnou objednávku tohoto jídelníčku
+        const objednavkySnapshot =
+          await getDocs(collection(db, 'objednavky'));
+
+        for (const objednavka of objednavkySnapshot.docs) {
+
+          const data = objednavka.data();
+
+          if (data.jidelnicekId === jidelnicekId) {
+
+            await updateDoc(objednavka.ref, {
+              datum: noveDatum,
+              jidloId: noveJidlo.id,
+              nazev: noveJidlo.nazev,
+              kategorie: noveJidlo.kategorie
+            });
+
+          }
+        }
+
+        overlay.remove();
+
+        msg('✅ Jídelníček byl upraven.');
+
+        await nactiJidelnicek();
+
+      } catch (error) {
+
+        console.error('CHYBA ÚPRAVY JÍDELNÍČKU:', error);
+
+        alert('❌ Jídelníček se nepodařilo upravit.');
+      }
+    };
+
+  } catch (error) {
+
+    console.error('CHYBA NAČÍTÁNÍ ÚPRAVY:', error);
+
+    alert('❌ Jídelníček se nepodařilo načíst.');
+  }
+};
+
+window.smazatJidelnicek = async function(jidelnicekId) {
+
+  if (currentUserRole !== 'admin') {
+    alert('Tuto akci může provést pouze administrátor.');
+    return;
+  }
+
+  const potvrdit = confirm(
+    'Opravdu chceš tuto položku odstranit z jídelníčku?'
+  );
+
+  if (!potvrdit) {
+    return;
+  }
+
+  try {
+
+    const jidelnicekRef = doc(db, 'jidelnicky', jidelnicekId);
+
+    await deleteDoc(jidelnicekRef);
+
+    // Smažeme i případné objednávky navázané na toto jídlo
+    const objednavkySnapshot =
+      await getDocs(collection(db, 'objednavky'));
+
+    for (const objednavka of objednavkySnapshot.docs) {
+
+      const data = objednavka.data();
+
+      if (data.jidelnicekId === jidelnicekId) {
+        await deleteDoc(objednavka.ref);
+      }
+    }
+
+    msg('✅ Položka byla z jídelníčku odstraněna.');
+
+    await nactiJidelnicek();
+
+  } catch (error) {
+
+    console.error('CHYBA MAZÁNÍ JÍDELNÍČKU:', error);
+
+    alert('❌ Položku se nepodařilo odstranit.');
+  }
+};
+
+window.objednatJidlo = async function(jidlo) {
+  if (!currentUser) {
+    alert('Nejsi přihlášený.');
+    return false;
+  }
+
+  const objednavkaId = `${currentUser.uid}_${jidlo.id}`;
+
+  try {
+    const objednavkaRef = doc(db, 'objednavky', objednavkaId);
+
+// Načteme nick uživatele
+const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
+const nick = userDoc.exists()
+  ? (userDoc.data().name || currentUser.email)
+  : currentUser.email;
+
+await setDoc(objednavkaRef, {
+  uid: currentUser.uid,
+  nick: nick,
+  email: currentUser.email,
+  jidelnicekId: jidlo.id,
+      datum: jidlo.datum,
+      jidloId: jidlo.jidloId || '',
+      nazev: jidlo.nazev || '',
+      kategorie: jidlo.kategorie || '',
+      objednano: new Date().toISOString()
+    });
+
+    msg(`✅ ${jidlo.nazev} bylo objednáno na ${jidlo.datum}.`);
+
+    return true;
+
+  } catch (error) {
+    console.error('CHYBA OBJEDNÁVKY:', error);
+    alert('❌ Objednávku se nepodařilo uložit.');
+    return false;
+  }
+};
+
+window.renderObjednavky = async function renderObjednavky() {
+
+  try {
+
+    const snapshot = await getDocs(collection(db, 'objednavky'));
+
+    const objednavky = snapshot.docs.map(docSnap => ({
+      id: docSnap.id,
+      ...docSnap.data()
+    }));
+
+    objednavky.sort((a, b) => {
+      return String(a.datum || '').localeCompare(String(b.datum || ''));
+    });
+
+    let html = `
+      <div style="
+        max-width:900px;
+        margin:30px auto;
+        padding:25px;
+        background:#eaf3fa;
+        border:2px solid #b4e6ff;
+        border-radius:18px;
+        box-shadow:0 4px 20px #2196f322;
+      ">
+
+        <h2 style="
+          color:#1960b3;
+          text-align:center;
+          margin-top:0;
+        ">
+          📦 Objednávky
+        </h2>
+
+        <button
+          id="btn-zpet-objednavky"
+          style="
+            padding:10px 18px;
+            border:0;
+            border-radius:10px;
+            background:#6c757d;
+            color:white;
+            font-weight:bold;
+            cursor:pointer;
+            margin-bottom:20px;
+          "
+        >
+          ← Zpět
+        </button>
+    `;
+
+    if (objednavky.length === 0) {
+
+      html += `
+        <div style="
+          padding:20px;
+          background:white;
+          border-radius:12px;
+          text-align:center;
+        ">
+          📭 Zatím není žádná objednávka.
+        </div>
+      `;
+
+    } else {
+
+      let posledniDatum = '';
+
+      objednavky.forEach(obj => {
+
+        if (obj.datum !== posledniDatum) {
+
+          if (posledniDatum !== '') {
+            html += `</div>`;
+          }
+
+          posledniDatum = obj.datum;
+
+          const casti = String(obj.datum || '').split('-');
+
+          const datumText =
+            casti.length === 3
+              ? `${casti[2]}.${casti[1]}.${casti[0]}`
+              : obj.datum || '';
+
+          html += `
+            <div style="
+              margin-top:20px;
+              padding:15px;
+              background:#f7fbff;
+              border:1px solid #cfe8fa;
+              border-radius:12px;
+            ">
+
+              <h3 style="
+                margin:0 0 12px 0;
+                color:#1960b3;
+              ">
+                📅 ${datumText}
+              </h3>
+          `;
+        }
+
+        html += `
+          <div style="
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            gap:15px;
+            padding:12px;
+            margin-top:8px;
+            background:white;
+            border:1px solid #e2edf7;
+            border-radius:10px;
+          ">
+
+            <div>
+
+              <strong style="font-size:17px;">
+                ${escapeHtml(obj.nazev || 'Bez názvu')}
+              </strong>
+
+              <div style="
+                margin-top:4px;
+                color:#666;
+              ">
+                ${escapeHtml(obj.kategorie || '')}
+              </div>
+
+              <div style="
+                margin-top:5px;
+                font-size:14px;
+                color:#1960b3;
+              ">
+              👤 ${escapeHtml(obj.nick || 'Neznámý uživatel')}
+              </div>
+
+            </div>
+
+            <div style="
+              color:#28a745;
+              font-weight:bold;
+              white-space:nowrap;
+            ">
+              ✅ Objednáno
+            </div>
+
+          </div>
+        `;
+      });
+
+      if (posledniDatum !== '') {
+        html += `</div>`;
+      }
+    }
+
+    html += `
+      </div>
+    `;
+
+    document.getElementById('main-content').innerHTML = html;
+
+    document.getElementById('btn-zpet-objednavky').onclick = () => {
+      renderMain();
+    };
+
+  } catch (error) {
+
+    console.error('CHYBA NAČTENÍ OBJEDNÁVEK:', error);
+
+    document.getElementById('main-content').innerHTML = `
+      <div style="
+        max-width:600px;
+        margin:40px auto;
+        padding:20px;
+        background:#ffecec;
+        border:1px solid #ffb5b5;
+        border-radius:12px;
+        text-align:center;
+        color:#b00000;
+      ">
+        ❌ Objednávky se nepodařilo načíst.
+      </div>
+    `;
+  }
+};
+
+window.renderMain = function renderMain() {
+
+const actionsPanel = document.querySelector('.actions-panel');
+
+if (actionsPanel) {
+  actionsPanel.style.display =
+    currentUserRole === 'admin' ? 'block' : 'none';
+}
+
+  document.getElementById('main-content').innerHTML = `
+    <div style="
+      max-width:500px;
+      margin:40px auto;
+      padding:30px;
+      background:#eaf3fa;
+      border:2px solid #b4e6ff;
+      border-radius:18px;
+      text-align:center;
+      box-shadow:0 4px 20px #2196f322;
+    ">
+
+      <h2 style="color:#1960b3;">
+        🍽️ Vítej v FoodCheck
+      </h2>
+
+      <p style="font-size:18px;">
+        Přihlášení proběhlo úspěšně.
+      </p>
+
+      <p>
+        Uživatel:
+        <strong>${currentUser?.email || ''}</strong>
+      </p>
+
+      <p>
+        Role:
+        <strong>${currentUserRole || 'user'}</strong>
+      </p>
+
+      ${
+        currentUserRole === 'admin'
+          ? `
+            <div style="
+              margin:25px 0;
+              padding:18px;
+              background:#fff;
+              border:2px solid #b4e6ff;
+              border-radius:14px;
+            ">
+              <h3 style="color:#1960b3;margin-top:0;">
+                ⚙️ Administrace
+              </h3>
+
+              <p>
+                Máš administrátorská oprávnění.
+              </p>
+
+              <button
+                id="admin-database-btn"
+                style="
+                  padding:12px 20px;
+                  margin:5px;
+                  border:0;
+                  border-radius:10px;
+                  background:#1663b2;
+                  color:white;
+                  font-weight:bold;
+                  cursor:pointer;
+                "
+              >
+                📋 Databáze jídel
+              </button>
+
+              <button
+                id="admin-add-btn"
+                style="
+                  padding:12px 20px;
+                  margin:5px;
+                  border:0;
+                  border-radius:10px;
+                  background:#28a745;
+                  color:white;
+                  font-weight:bold;
+                  cursor:pointer;
+                "
+              >
+                ➕ Přidat jídlo
+                            <button
+                id="admin-orders-btn"
+                style="
+                  padding:12px 20px;
+                  margin:5px;
+                  border:0;
+                  border-radius:10px;
+                  background:#8e44ad;
+                  color:white;
+                  font-weight:bold;
+                  cursor:pointer;
+                "
+              >
+                📦 Objednávky
+              </button>
+
+              <div style="
+                margin:25px 0 0 0;
+                padding:20px;
+                background:#fff;
+                border:2px solid #b4e6ff;
+                border-radius:14px;
+                text-align:left;
+              ">
+                <h3 style="
+                  color:#1960b3;
+                  margin-top:0;
+                  text-align:center;
+                ">
+                  📋 Jídelníček
+                </h3>
+
+                <p style="text-align:center;">
+                  Aktuálně naplánovaná jídla.
+                </p>
+
+                <div
+                  id="jidelnicek-data"
+                  style="padding:5px;"
+                >
+                  <div style="
+                    padding:15px;
+                    background:#eef8ff;
+                    border-radius:10px;
+                    text-align:center;
+                  ">
+                    ⏳ Načítám jídelníček...
+                  </div>
+                </div>
+              </div>
+
+            </div>
+           
+              </div>
+          `
+                : `
+        <div style="
+          margin:25px 0;
+          padding:20px;
+          background:#fff;
+          border:2px solid #b4e6ff;
+          border-radius:14px;
+          text-align:left;
+        ">
+          <h3 style="
+            color:#1960b3;
+            margin-top:0;
+            text-align:center;
+          ">
+            🍽️ Můj jídelníček
+          </h3>
+
+          <p style="text-align:center;">
+            Tady se ti zobrazí aktuální jídelníček.
+          </p>
+
+          <div
+  id="jidelnicek-data"
+  style="
+    padding:5px;
+  "
+>
+  <div style="
+    padding:15px;
+    background:#eef8ff;
+    border-radius:10px;
+    text-align:center;
+  ">
+    ⏳ Načítám jídelníček...
+  </div>
+</div>
+        </div>
+      `
+      }
+
+      <button
+        id="logout-btn"
+        style="
+          padding:12px 25px;
+          border:0;
+          border-radius:10px;
+          background:#d9534f;
+          color:white;
+          font-weight:bold;
+          cursor:pointer;
+        "
+      >
+        Odhlásit se
+      </button>
+
+    </div>
+  `;
+
+  document.getElementById('logout-btn').onclick = async () => {
+    await signOut(auth);
+  };
+
+    if (currentUserRole === 'user' || currentUserRole === 'admin') {
+    nactiJidelnicek();
+  }
+  
+   if (currentUserRole === 'admin') {
+
+    document.getElementById('admin-database-btn').onclick = () => {
+      renderJidlaTable(lastFilterKategorie);
+    };
+
+    document.getElementById('admin-add-btn').onclick = () => {
+      renderAddJidlo();
+    };
+
+    document.getElementById('admin-orders-btn').onclick = () => {
+      renderObjednavky();
+    };
+
+  }
+};
+
+function renderLogin() {
+  document.getElementById('main-content').innerHTML = `
+    <div style="
+      max-width:420px;
+      margin:40px auto;
+      background:#eaf3fa;
+      border:2px solid #b4e6ff;
+      border-radius:18px;
+      padding:25px;
+      box-shadow:0 4px 20px #2196f322;
+    ">
+      
+      <h2 style="text-align:center;color:#1960b3;">
+        🔐 EasyCook
+      </h2>
+
+      <div style="display:flex;gap:8px;margin-bottom:20px;">
+        <button id="login-tab" style="flex:1;padding:10px;border-radius:10px;border:0;background:#1663b2;color:white;">
+          Přihlášení
+        </button>
+
+        <button id="register-tab" style="flex:1;padding:10px;border-radius:10px;border:1px solid #8ab7ec;background:white;color:#2061c3;">
+          Registrace
+        </button>
+      </div>
+
+      <div id="auth-form"></div>
+
+    </div>
+  `;
+
+  renderLoginForm();
+
+  document.getElementById('login-tab').onclick = () => {
+    renderLoginForm();
+  };
+
+  document.getElementById('register-tab').onclick = () => {
+    renderRegisterForm();
+  };
+}
+
+function renderLoginForm() {
+  document.getElementById('auth-form').innerHTML = `
+    <form id="login-form">
+
+      <label>
+        E-mail:<br>
+        <input
+          type="email"
+          id="login-email"
+          required
+          style="width:100%;box-sizing:border-box;padding:10px;margin:5px 0 12px;border-radius:8px;border:1px solid #a7cffa;"
+        >
+      </label>
+
+      <label>
+        Heslo:<br>
+        <input
+          type="password"
+          id="login-password"
+          required
+          style="width:100%;box-sizing:border-box;padding:10px;margin:5px 0 15px;border-radius:8px;border:1px solid #a7cffa;"
+        >
+      </label>
+
+      <button
+        type="submit"
+        style="width:100%;padding:12px;border:0;border-radius:12px;background:#1663b2;color:white;font-weight:bold;cursor:pointer;"
+      >
+        Přihlásit
+      </button>
+
+      <div id="auth-message" style="margin-top:12px;text-align:center;"></div>
+
+    </form>
+  `;
+
+  document.getElementById('login-form').onsubmit = async (e) => {
+    e.preventDefault();
+
+    const email = document.getElementById('login-email').value.trim();
+    const password = document.getElementById('login-password').value;
+
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+    } catch (error) {
+      document.getElementById('auth-message').innerText =
+        '❌ Nesprávný e-mail nebo heslo.';
+    }
+  };
+}
+
+function renderRegisterForm() {
+  document.getElementById('auth-form').innerHTML = `
+    <form id="register-form">
+
+      <label>
+        Jméno:<br>
+        <input
+          type="text"
+          id="register-name"
+          required
+          style="width:100%;box-sizing:border-box;padding:10px;margin:5px 0 12px;border-radius:8px;border:1px solid #a7cffa;"
+        >
+      </label>
+
+      <label>
+        E-mail:<br>
+        <input
+          type="email"
+          id="register-email"
+          required
+          style="width:100%;box-sizing:border-box;padding:10px;margin:5px 0 12px;border-radius:8px;border:1px solid #a7cffa;"
+        >
+      </label>
+
+      <label>
+        Heslo:<br>
+        <input
+          type="password"
+          id="register-password"
+          minlength="6"
+          required
+          style="width:100%;box-sizing:border-box;padding:10px;margin:5px 0 12px;border-radius:8px;border:1px solid #a7cffa;"
+        >
+      </label>
+
+      <label>
+        Heslo znovu:<br>
+        <input
+          type="password"
+          id="register-password2"
+          minlength="6"
+          required
+          style="width:100%;box-sizing:border-box;padding:10px;margin:5px 0 15px;border-radius:8px;border:1px solid #a7cffa;"
+        >
+      </label>
+
+      <button
+        type="submit"
+        style="width:100%;padding:12px;border:0;border-radius:12px;background:#28a745;color:white;font-weight:bold;cursor:pointer;"
+      >
+        Registrovat
+      </button>
+
+      <div id="auth-message" style="margin-top:12px;text-align:center;"></div>
+
+    </form>
+  `;
+
+  document.getElementById('register-form').onsubmit = async (e) => {
+    e.preventDefault();
+
+    const name = document.getElementById('register-name').value.trim();
+    const email = document.getElementById('register-email').value.trim();
+    const password = document.getElementById('register-password').value;
+    const password2 = document.getElementById('register-password2').value;
+
+    if (password !== password2) {
+      document.getElementById('auth-message').innerText =
+        '❌ Hesla se neshodují.';
+      return;
+    }
+
+    try {
+      const userCredential =
+        await createUserWithEmailAndPassword(auth, email, password);
+
+      await setDoc(doc(db, 'users', userCredential.user.uid), {
+        name: name,
+        email: email,
+        role: 'user',
+        createdAt: new Date().toISOString()
+      });
+
+        } catch (error) {
+      console.error('REGISTRACE CHYBA:', error);
+      
+      let message = '❌ Registrace se nepodařila.';
+
+      if (error.code === 'auth/email-already-in-use') {
+        message = '❌ Tento e-mail už je registrovaný.';
+      } else if (error.code === 'auth/weak-password') {
+        message = '❌ Heslo musí mít alespoň 6 znaků.';
+      } else if (error.code === 'auth/invalid-email') {
+        message = '❌ Neplatný e-mail.';
+      } else if (error.code === 'permission-denied') {
+        message = '❌ Firebase odmítl zápis do databáze.';
+      } else if (error.message) {
+        message = '❌ ' + error.message;
+      }
+
+      document.getElementById('auth-message').innerText = message;
+    }
+  };
+}
+
+function renderJidlaTable(filter = lastFilterKategorie) {
+  lastFilterKategorie = filter;
+  let jidlaSorted = jidla.slice().sort((a, b) => a.nazev.localeCompare(b.nazev, 'cs', { sensitivity: 'base' }));
+  let html = `
+    <div class="jidla-table-wrap">
+      <div class="table-filters">
+        <label>Kategorie:
+          <select id="filtr-kategorie">
+            <option value="">-- všechny --</option>
+            ${getKategorie().map(cat => `<option value="${cat}">${cat}</option>`).join('')}
+          </select>
+        </label>
+        <button id="btn-close-table">Zavřít</button>
+      </div>
+      <table class="jidla-table">
+        <thead>
+          <tr>
+            <th>Název</th>
+            <th>Kategorie</th>
+            <th>Akce</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${jidlaSorted.map((j, realIdx) =>
+            (!filter || j.kategorie === filter) ? `
+            <tr>
+              <td>${escapeHtml(j.nazev)}</td>
+              <td><span class="category-label cat-${escapeHtml(j.kategorie)}">${escapeHtml(j.kategorie)}</span></td>
+              <td class="action-btns">
+  <button onclick="editJidlo(${jidla.indexOf(j)})">Upravit</button>
+
+  <button
+    onclick="pridatDoJidelnicku(${JSON.stringify(j).replace(/"/g, '&quot;')})"
+    style="
+      background:#28a745;
+      color:white;
+      border-color:#28a745;
+    "
+  >
+    📅 Do jídelníčku
+  </button>
+
+  <button onclick="deleteJidlo(${jidla.indexOf(j)})">Smazat</button>
+</td>
+            </tr>
+          ` : ''
+          ).join('')}
+        </tbody>
+      </table>
+    </div>
+  `;
+  document.getElementById('main-content').innerHTML = html;
+  document.getElementById('filtr-kategorie').value = filter;
+  document.getElementById('filtr-kategorie').onchange = function() {
+    renderJidlaTable(this.value);
+  };
+  document.getElementById('btn-close-table').onclick = window.renderMain;
+}
+
+function escapeHtml(txt) {
+  return (txt ?? '').replace(/[&<>"']/g, function(m) {
+    return ({
+      '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'
+    })[m];
+  });
+}
+
+window.editJidlo = function(idx) {
+  lastScrollTop = window.scrollY;
+  const j = jidla[idx];
+  const kategorieList = getKategorie();
+  const html = `
+    <h2>Úprava jídla</h2>
+    <form id="edit-form">
+      <label>Název:<br>
+        <input type="text" id="edit-nazev" value="${escapeHtml(j.nazev)}" required>
+      </label><br><br>
+      <label>Kategorie:<br>
+        <select id="edit-kategorie" required>
+          ${kategorieList.map(cat => `<option value="${cat}" ${cat === j.kategorie ? 'selected' : ''}>${cat}</option>`).join('')}
+          <option value="_new_">+ Nová kategorie...</option>
+        </select>
+        <input type="text" id="new-kategorie" placeholder="Zadej novou kategorii" style="display:none; margin-top:6px;" />
+      </label><br><br>
+      <button type="submit">Uložit</button>
+      <button type="button" id="btn-cancel">Zrušit</button>
+    </form>
+  `;
+  document.getElementById('main-content').innerHTML = html;
+
+  const select = document.getElementById('edit-kategorie');
+  const newInput = document.getElementById('new-kategorie');
+  select.onchange = function () {
+    if (this.value === '_new_') {
+      newInput.style.display = 'inline-block';
+      newInput.required = true;
+      newInput.focus();
+    } else {
+      newInput.style.display = 'none';
+      newInput.required = false;
+    }
+  };
+  if (select.value === '_new_') {
+    newInput.style.display = 'inline-block';
+    newInput.required = true;
+    newInput.focus();
+  }
+  document.getElementById('edit-form').onsubmit = function(e) {
+    e.preventDefault();
+    const newNazev = document.getElementById('edit-nazev').value.trim();
+    let kategorie;
+    if (select.value === '_new_') {
+      kategorie = newInput.value.trim();
+      if (!kategorie) {
+        alert("Zadej název nové kategorie.");
+        newInput.focus();
+        return;
+      }
+    } else {
+      kategorie = select.value;
+    }
+    j.nazev = newNazev;
+    j.kategorie = kategorie;
+    saveJidla();
+    msg('Jídlo upraveno.');
+    renderJidlaTable(lastFilterKategorie);
+    setTimeout(() => window.scrollTo(0, lastScrollTop), 0);
+  };
+  document.getElementById('btn-cancel').onclick = () => {
+    renderJidlaTable(lastFilterKategorie);
+    setTimeout(() => window.scrollTo(0, lastScrollTop), 0);
+  };
+};
+
+window.deleteJidlo = function(idx) {
+  if (confirm('Opravdu smazat toto jídlo?')) {
+    jidla.splice(idx, 1);
+    saveJidla();
+    msg('Jídlo smazáno.');
+    renderJidlaTable(lastFilterKategorie);
+    setTimeout(() => window.scrollTo(0, lastScrollTop), 0);
+  }
+}
+
+function renderAddJidlo() {
+  const html = `
+    <h2>Přidat nové jídlo</h2>
+    <form id="add-form">
+      <label>Název:<br>
+        <input type="text" id="add-nazev" required>
+      </label><br><br>
+      <label>Kategorie:<br>
+        <input type="text" id="add-kategorie" required placeholder="Např. Omáčky, Bezmasá...">
+      </label><br><br>
+      <button type="submit">Přidat</button>
+      <button type="button" id="btn-cancel-add">Zrušit</button>
+    </form>
+  `;
+  document.getElementById('main-content').innerHTML = html;
+  document.getElementById('add-form').onsubmit = function(e) {
+    e.preventDefault();
+    jidla.push({
+      nazev: document.getElementById('add-nazev').value.trim(),
+      kategorie: document.getElementById('add-kategorie').value.trim()
+    });
+    saveJidla();
+    msg('Jídlo přidáno.');
+    renderJidlaTable(lastFilterKategorie);
+    setTimeout(() => window.scrollTo(0, lastScrollTop), 0);
+  };
+  document.getElementById('btn-cancel-add').onclick = () => window.renderMain();
+}
+
+function renderMenuGenerator() {
+  const jidlaBezPolevek = jidla.filter(j => j.kategorie !== 'Polévky');
+  const polevky = jidla.filter(j => j.kategorie === "Polévky");
+
+  let html = `
+    <div class="generator">
+      <h2>Generátor jídelníčku</h2>
+      <div class="gen-controls" style="margin-bottom:20px;">
+        <button class="btn-gen-small" id="btn-gen-menu">Náhodně vybrat 10 jídel a 3 polévky</button>
+      </div>
+      <div id="generator-menu"></div>
+    </div>
+  `;
+  document.getElementById('main-content').innerHTML = html;
+
+  function shuffle(arr) {
+    let a = arr.slice();
+    for (let i = a.length - 1; i > 0; i--) {
+      let j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
+  function vygenerujMenu() {
+    let nahodnaJidla = shuffle(jidlaBezPolevek).slice(0, 10);
+    let nahodnePolevky = shuffle(polevky).slice(0, 3);
+
+    let html = `
+      <div class="vysledky-menu">
+        <div class="menu-block">
+          <div class="menu-label">Polévky (3 náhodné)</div>
+          <ol>
+            ${nahodnePolevky.map(p => `<li>${escapeHtml(p.nazev)}</li>`).join('')}
+          </ol>
+        </div>
+        <div class="menu-block">
+          <div class="menu-label">Hlavní jídla (10 náhodných)</div>
+          <ol>
+            ${nahodnaJidla.map(j =>
+              `<li>${escapeHtml(j.nazev)} <span class="category-label cat-${escapeHtml(j.kategorie)}">${escapeHtml(j.kategorie)}</span></li>`
+            ).join('')}
+          </ol>
+        </div>
+      </div>
+    `;
+    document.getElementById('generator-menu').innerHTML = html;
+  }
+
+  document.getElementById('btn-gen-menu').onclick = vygenerujMenu;
+}
+
+document.getElementById('btn-show-database').onclick = () => renderJidlaTable(lastFilterKategorie);
+document.getElementById('btn-add-new').onclick = () => renderAddJidlo();
+document.getElementById('btn-generate-menu').onclick = () => renderMenuGenerator();
+document.getElementById('btn-download-db').onclick = downloadDb;
+document.getElementById('file-upload').onchange = function(e) {
+  if (e.target.files && e.target.files[0]) {
+    importDb(e.target.files[0]);
+  }
+};
+
+
+</script>
+</body>
+</html>
