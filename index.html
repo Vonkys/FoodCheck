@@ -71,6 +71,77 @@
       .btn-gen { min-width: unset; padding: 14px 5vw; font-size: 1em;}
       .group-backup button, .group-backup label { width: 85px; height: 33px; font-size: 0.93em;}
       .group-backup-row { margin-left:0; gap:7px;}
+      .jidla-table-wrap {
+        width: 100%;
+        box-sizing: border-box;
+        overflow-x: hidden;
+        padding: 7px 4px 3px 4px;
+      }
+
+      table.jidla-table {
+        width: 100%;
+        min-width: 0;
+        table-layout: fixed;
+      }
+
+      table.jidla-table th,
+      table.jidla-table td {
+        padding: 7px 4px;
+        font-size: 0.88em;
+        word-break: break-word;
+      }
+
+      table.jidla-table th:nth-child(1),
+      table.jidla-table td:nth-child(1) {
+        width: 34%;
+      }
+
+      table.jidla-table th:nth-child(2),
+      table.jidla-table td:nth-child(2) {
+        width: 23%;
+      }
+
+      table.jidla-table th:nth-child(3),
+      table.jidla-table td:nth-child(3) {
+        width: 43%;
+      }
+
+      .action-btns {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+      }
+
+      .action-btns button {
+        padding: 5px 6px;
+        font-size: 0.82em;
+        min-width: 0;
+      }
+
+      .table-filters {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+      }
+
+      .table-filters label {
+        width: 100%;
+        box-sizing: border-box;
+      }
+
+      .table-filters select,
+      .table-filters input {
+        width: 100%;
+        box-sizing: border-box;
+        min-width: 0;
+      }
+
+      .table-filters button {
+        width: 100%;
+        margin-left: 0;
+        box-sizing: border-box;
+      }
     }
   </style>
 </head>
