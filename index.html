@@ -539,6 +539,46 @@ window.pridatDoJidelnicku = async function(jidlo) {
   }
 }
 
+function getSmenaProDatum(datum) {
+  // 03.08.2026 = 1. den 28denního cyklu
+  const reference = new Date('2026-08-03T00:00:00');
+  const cil = new Date(`${datum}T00:00:00`);
+
+  const rozdilMs = cil - reference;
+  const rozdilDni = Math.floor(rozdilMs / 86400000);
+
+  // Cyklus 28 dní
+  const denCyklu = ((rozdilDni % 28) + 28) % 28;
+
+  const smeny = [
+    'R', 'R', 'V', 'V', 'V', 'N', 'N',
+    'V', 'V', 'R', 'R', 'V', 'V', 'V',
+    'N', 'N', 'V', 'V', 'R', 'R', 'R',
+    'V', 'V', 'N', 'N', 'V', 'V', 'V'
+  ];
+
+  const smena = smeny[denCyklu];
+
+  if (smena === 'R') {
+    return {
+      text: '☀️ Ranní',
+      barva: '#e67e22'
+    };
+  }
+
+  if (smena === 'N') {
+    return {
+      text: '🌙 Noční',
+      barva: '#6c5ce7'
+    };
+  }
+
+  return {
+    text: '💤 Volno',
+    barva: '#888'
+  };
+}
+
 async function nactiJidelnicek() {
   const container = document.getElementById('jidelnicek-data');
 
@@ -603,6 +643,8 @@ async function nactiJidelnicek() {
 
       const datumText = `${den}.${mesic}.${rok}`;
 
+      const smena = getSmenaProDatum(datum);
+      
       html += `
         <div style="
           margin-bottom:20px;
@@ -613,12 +655,33 @@ async function nactiJidelnicek() {
         ">
 
           <h4 style="
-            margin:0 0 12px 0;
-            color:#1960b3;
-            font-size:19px;
-          ">
-            📅 ${datumText}
-          </h4>
+  margin:0 0 12px 0;
+  color:#1960b3;
+  font-size:19px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  flex-wrap:wrap;
+">
+  <span>
+    📅 ${datumText}
+  </span>
+
+  <span style="
+    display:inline-block;
+    padding:5px 10px;
+    border-radius:10px;
+    background:${smena.barva}18;
+    border:1px solid ${smena.barva}55;
+    color:${smena.barva};
+    font-size:14px;
+    font-weight:700;
+    white-space:nowrap;
+  ">
+    ${smena.text}
+  </span>
+</h4>
       `;
 
       podleDni[datum].forEach(jidlo => {
