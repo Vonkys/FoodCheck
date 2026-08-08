@@ -1946,21 +1946,61 @@ function renderRegisterForm() {
   };
 }
 
-function renderJidlaTable(filter = lastFilterKategorie) {
+function renderJidlaTable(filter = lastFilterKategorie, search = '') {
   lastFilterKategorie = filter;
-  let jidlaSorted = jidla.slice().sort((a, b) => a.nazev.localeCompare(b.nazev, 'cs', { sensitivity: 'base' }));
+
+  let jidlaSorted = jidla.slice().sort((a, b) =>
+    a.nazev.localeCompare(b.nazev, 'cs', { sensitivity: 'base' })
+  );
+
+  const hledanyText = search.trim().toLocaleLowerCase('cs');
+
   let html = `
     <div class="jidla-table-wrap">
+
       <div class="table-filters">
-        <label>Kategorie:
+
+        <label>
+          Kategorie:
           <select id="filtr-kategorie">
             <option value="">-- všechny --</option>
-            ${getKategorie().map(cat => `<option value="${cat}">${cat}</option>`).join('')}
+            ${getKategorie()
+              .map(cat => `<option value="${escapeHtml(cat)}">${escapeHtml(cat)}</option>`)
+              .join('')}
           </select>
         </label>
-        <button id="btn-close-table">Zavřít</button>
+
+        <label style="
+          display:flex;
+          align-items:center;
+          gap:6px;
+        ">
+          🔎
+          <input
+            type="text"
+            id="filtr-jidlo"
+            placeholder="Hledat jídlo..."
+            value="${escapeHtml(search)}"
+            style="
+              font-size:1em;
+              border-radius:8px;
+              border:1px solid #a7cffa;
+              padding:7px 12px;
+              background:#f4faff;
+              min-width:180px;
+              outline:none;
+            "
+          >
+        </label>
+
+        <button id="btn-close-table">
+          Zavřít
+        </button>
+
       </div>
+
       <table class="jidla-table">
+
         <thead>
           <tr>
             <th>Název</th>
@@ -1968,40 +2008,93 @@ function renderJidlaTable(filter = lastFilterKategorie) {
             <th>Akce</th>
           </tr>
         </thead>
+
         <tbody>
-          ${jidlaSorted.map((j, realIdx) =>
-            (!filter || j.kategorie === filter) ? `
-            <tr>
-              <td>${escapeHtml(j.nazev)}</td>
-              <td><span class="category-label cat-${escapeHtml(j.kategorie)}">${escapeHtml(j.kategorie)}</span></td>
-              <td class="action-btns">
-  <button onclick="editJidlo(${jidla.indexOf(j)})">Upravit</button>
 
-  <button
-    onclick="pridatDoJidelnicku(${JSON.stringify(j).replace(/"/g, '&quot;')})"
-    style="
-      background:#28a745;
-      color:white;
-      border-color:#28a745;
-    "
-  >
-    📅 Do jídelníčku
-  </button>
+          ${jidlaSorted.map((j) => {
 
-  <button onclick="deleteJidlo(${jidla.indexOf(j)})">Smazat</button>
-</td>
-            </tr>
-          ` : ''
-          ).join('')}
+            const odpovidaKategorie =
+              !filter || j.kategorie === filter;
+
+            const odpovidaHledani =
+              !hledanyText ||
+              j.nazev.toLocaleLowerCase('cs').startsWith(hledanyText);
+
+            if (!odpovidaKategorie || !odpovidaHledani) {
+              return '';
+            }
+
+            return `
+              <tr>
+
+                <td>
+                  ${escapeHtml(j.nazev)}
+                </td>
+
+                <td>
+                  <span class="category-label cat-${escapeHtml(j.kategorie)}">
+                    ${escapeHtml(j.kategorie)}
+                  </span>
+                </td>
+
+                <td class="action-btns">
+
+                  <button onclick="editJidlo(${jidla.indexOf(j)})">
+                    Upravit
+                  </button>
+
+                  <button
+                    onclick="pridatDoJidelnicku(${JSON.stringify(j).replace(/"/g, '&quot;')})"
+                    style="
+                      background:#28a745;
+                      color:white;
+                      border-color:#28a745;
+                    "
+                  >
+                    📅 Do jídelníčku
+                  </button>
+
+                  <button onclick="deleteJidlo(${jidla.indexOf(j)})">
+                    Smazat
+                  </button>
+
+                </td>
+
+              </tr>
+            `;
+
+          }).join('')}
+
         </tbody>
+
       </table>
+
     </div>
   `;
+
   document.getElementById('main-content').innerHTML = html;
+
   document.getElementById('filtr-kategorie').value = filter;
+
   document.getElementById('filtr-kategorie').onchange = function() {
-    renderJidlaTable(this.value);
+    renderJidlaTable(this.value, hledanyText);
   };
+
+  document.getElementById('filtr-jidlo').oninput = function() {
+  const hodnota = this.value;
+
+  renderJidlaTable(filter, hodnota);
+
+  setTimeout(() => {
+    const input = document.getElementById('filtr-jidlo');
+
+    if (input) {
+      input.focus();
+      input.setSelectionRange(input.value.length, input.value.length);
+    }
+  }, 0);
+};
+
   document.getElementById('btn-close-table').onclick = window.renderMain;
 }
 
