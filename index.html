@@ -331,6 +331,20 @@ window.pridatDoJidelnicku = async function(jidlo) {
     return;
   }
 
+  const prilohySnapshot = await getDocs(collection(db, 'prilohy'));
+
+  const prilohy = prilohySnapshot.docs.map(docSnap => ({
+    id: docSnap.id,
+    ...docSnap.data()
+  }));
+
+  prilohy.sort((a, b) =>
+    String(a.nazev || '').localeCompare(
+      String(b.nazev || ''),
+      'cs'
+    )
+  );
+  
   const datum = await new Promise(resolve => {
 
     const overlay = document.createElement('div');
@@ -368,27 +382,59 @@ window.pridatDoJidelnicku = async function(jidlo) {
         </p>
 
         <label style="
-          display:block;
-          margin-bottom:18px;
-          font-weight:600;
-        ">
-          Vyber datum:
+  display:block;
+  margin-bottom:18px;
+  font-weight:600;
+">
+  Vyber datum:
 
-          <input
-            type="date"
-            id="jidelnicek-datum"
-            style="
-              display:block;
-              width:100%;
-              box-sizing:border-box;
-              margin-top:8px;
-              padding:10px;
-              border:1px solid #a7cffa;
-              border-radius:9px;
-              font-size:16px;
-            "
-          >
-        </label>
+  <input
+    type="date"
+    id="jidelnicek-datum"
+    style="
+      display:block;
+      width:100%;
+      box-sizing:border-box;
+      margin-top:8px;
+      padding:10px;
+      border:1px solid #a7cffa;
+      border-radius:9px;
+      font-size:16px;
+    "
+  >
+</label>
+
+<label style="
+  display:block;
+  margin-bottom:20px;
+  font-weight:600;
+">
+  Vyber přílohu:
+
+  <select
+    id="jidelnicek-priloha"
+    style="
+      display:block;
+      width:100%;
+      box-sizing:border-box;
+      margin-top:8px;
+      padding:10px;
+      border:1px solid #a7cffa;
+      border-radius:9px;
+      font-size:16px;
+      background:white;
+    "
+  >
+    <option value="">Bez přílohy</option>
+
+    ${prilohy.map(p => `
+      <option value="${p.id}">
+        ${escapeHtml(p.nazev || 'Bez názvu')}
+      </option>
+    `).join('')}
+  </select>
+</label>
+            
 
         <button
           id="potvrdit-datum"
@@ -427,7 +473,8 @@ window.pridatDoJidelnicku = async function(jidlo) {
     document.body.appendChild(overlay);
 
     const input = overlay.querySelector('#jidelnicek-datum');
-
+    const prilohaSelect = overlay.querySelector('#jidelnicek-priloha');
+    
     // Dnešek jako výchozí datum
     const dnes = new Date();
     const rok = dnes.getFullYear();
@@ -437,16 +484,26 @@ window.pridatDoJidelnicku = async function(jidlo) {
     input.value = `${rok}-${mesic}-${den}`;
 
     overlay.querySelector('#potvrdit-datum').onclick = () => {
-      const vybraneDatum = input.value;
+  const vybraneDatum = input.value;
+  const vybranaPrilohaId = prilohaSelect.value;
 
-      if (!vybraneDatum) {
-        alert('Vyber datum.');
-        return;
-      }
+  const vybranaPriloha = prilohy.find(
+    p => p.id === vybranaPrilohaId
+  );
 
-      overlay.remove();
-      resolve(vybraneDatum);
-    };
+  if (!vybraneDatum) {
+    alert('Vyber datum.');
+    return;
+  }
+
+  overlay.remove();
+
+  resolve({
+    datum: vybraneDatum,
+    prilohaId: vybranaPriloha?.id || '',
+    prilohaNazev: vybranaPriloha?.nazev || ''
+  });
+};
 
     overlay.querySelector('#zrusit-datum').onclick = () => {
       overlay.remove();
@@ -457,19 +514,25 @@ window.pridatDoJidelnicku = async function(jidlo) {
   });
 
   if (!datum) return;
-
+  
+  const vybraneDatum = datum.datum;
+  const vybranaPrilohaId = datum.prilohaId;
+  const vybranaPrilohaNazev = datum.prilohaNazev;
+  
   try {
     await addDoc(collection(db, 'jidelnicky'), {
-      datum: datum,
+      datum: vybraneDatum,
       jidloId: jidlo.id || '',
       nazev: jidlo.nazev,
       kategorie: jidlo.kategorie,
+      prilohaId: vybranaPrilohaId,
+      prilohaNazev: vybranaPrilohaNazev,
       vytvorilUid: currentUser.uid,
       vytvorilEmail: currentUser.email,
       vytvoreno: new Date().toISOString()
     });
 
-    msg(`✅ ${jidlo.nazev} bylo přidáno do jídelníčku na ${datum}.`);
+    msg(`✅ ${jidlo.nazev} bylo přidáno do jídelníčku na ${vybraneDatum}.`);
   } catch (error) {
     console.error('CHYBA JÍDELNÍČKU:', error);
     alert('❌ Jídlo se nepodařilo přidat do jídelníčku.');
@@ -574,18 +637,33 @@ async function nactiJidelnicek() {
 ">
 
   <div style="flex:1;">
-    <strong style="font-size:17px;">
-      ${jidlo.nazev || 'Bez názvu'}
-    </strong>
+  <strong style="font-size:17px;">
+    ${jidlo.nazev || 'Bez názvu'}
+  </strong>
 
-    <div style="
-      font-size:14px;
-      color:#666;
-      margin-top:3px;
-    ">
-      ${jidlo.kategorie || ''}
-    </div>
+  <div style="
+    font-size:14px;
+    color:#666;
+    margin-top:3px;
+  ">
+    ${jidlo.kategorie || ''}
   </div>
+
+  ${
+    jidlo.prilohaNazev
+      ? `
+        <div style="
+          font-size:14px;
+          color:#1960b3;
+          margin-top:5px;
+          font-weight:600;
+        ">
+          🍽️ Příloha: ${escapeHtml(jidlo.prilohaNazev)}
+        </div>
+      `
+      : ''
+  }
+</div>
 
              ${
         currentUserRole === 'user'
@@ -778,6 +856,20 @@ window.upravitJidelnicek = async function(jidelnicekId) {
 
     const puvodni = jidelnicekDoc.data();
 
+    const prilohySnapshot = await getDocs(collection(db, 'prilohy'));
+
+const prilohy = prilohySnapshot.docs.map(docSnap => ({
+  id: docSnap.id,
+  ...docSnap.data()
+}));
+
+prilohy.sort((a, b) =>
+  String(a.nazev || '').localeCompare(
+    String(b.nazev || ''),
+    'cs'
+  )
+);
+    
     const overlay = document.createElement('div');
 
     overlay.style.cssText = `
@@ -859,6 +951,36 @@ window.upravitJidelnicek = async function(jidelnicekId) {
           >
         </label>
 
+        <label style="display:block;margin-bottom:20px;font-weight:600;">
+  Příloha:
+
+  <select
+    id="edit-jidelnicek-priloha"
+    style="
+      display:block;
+      width:100%;
+      box-sizing:border-box;
+      margin-top:7px;
+      padding:10px;
+      border:1px solid #a7cffa;
+      border-radius:9px;
+      font-size:16px;
+      background:white;
+    "
+  >
+    <option value="">Bez přílohy</option>
+
+    ${prilohy.map(p => `
+      <option
+        value="${p.id}"
+        ${p.id === (puvodni.prilohaId || '') ? 'selected' : ''}
+      >
+        ${escapeHtml(p.nazev || 'Bez názvu')}
+      </option>
+    `).join('')}
+  </select>
+</label>
+        
         <div style="text-align:center;">
 
           <button
@@ -911,7 +1033,13 @@ window.upravitJidelnicek = async function(jidelnicekId) {
       const noveDatum =
         overlay.querySelector('#edit-jidelnicek-datum').value;
 
-      if (!noveJidloId || !noveDatum) {
+      const novaPrilohaId =
+        overlay.querySelector('#edit-jidelnicek-priloha').value;
+
+      const novaPriloha =
+        prilohy.find(p => p.id === novaPrilohaId);
+      
+        if (!noveJidloId || !noveDatum) {
         alert('Vyber jídlo i datum.');
         return;
       }
@@ -926,11 +1054,13 @@ window.upravitJidelnicek = async function(jidelnicekId) {
       try {
 
         await updateDoc(jidelnicekRef, {
-          datum: noveDatum,
-          jidloId: noveJidlo.id,
-          nazev: noveJidlo.nazev,
-          kategorie: noveJidlo.kategorie
-        });
+  datum: noveDatum,
+  jidloId: noveJidlo.id,
+  nazev: noveJidlo.nazev,
+  kategorie: noveJidlo.kategorie,
+  prilohaId: novaPriloha?.id || '',
+  prilohaNazev: novaPriloha?.nazev || ''
+});
 
         // Aktualizujeme případnou objednávku tohoto jídelníčku
         const objednavkySnapshot =
@@ -944,9 +1074,11 @@ window.upravitJidelnicek = async function(jidelnicekId) {
 
             await updateDoc(objednavka.ref, {
               datum: noveDatum,
-              jidloId: noveJidlo.id,
-              nazev: noveJidlo.nazev,
-              kategorie: noveJidlo.kategorie
+jidloId: noveJidlo.id,
+nazev: noveJidlo.nazev,
+kategorie: noveJidlo.kategorie,
+prilohaId: novaPriloha?.id || '',
+prilohaNazev: novaPriloha?.nazev || ''
             });
 
           }
@@ -1046,6 +1178,8 @@ await setDoc(objednavkaRef, {
       jidloId: jidlo.jidloId || '',
       nazev: jidlo.nazev || '',
       kategorie: jidlo.kategorie || '',
+      prilohaId: jidlo.prilohaId || '',
+      prilohaNazev: jidlo.prilohaNazev || '',
       objednano: new Date().toISOString()
     });
 
@@ -1189,6 +1323,21 @@ window.renderObjednavky = async function renderObjednavky() {
                 ${escapeHtml(obj.kategorie || '')}
               </div>
 
+              ${
+  obj.prilohaNazev
+    ? `
+      <div style="
+        margin-top:5px;
+        font-size:14px;
+        color:#1960b3;
+        font-weight:600;
+      ">
+        🍽️ Příloha: ${escapeHtml(obj.prilohaNazev)}
+      </div>
+    `
+    : ''
+}
+              
               <div style="
                 margin-top:5px;
                 font-size:14px;
@@ -1350,6 +1499,22 @@ if (actionsPanel) {
                 📦 Objednávky
               </button>
 
+                            <button
+                id="admin-prilohy-btn"
+                style="
+                  padding:12px 20px;
+                  margin:5px;
+                  border:0;
+                  border-radius:10px;
+                  background:#e67e22;
+                  color:white;
+                  font-weight:bold;
+                  cursor:pointer;
+                "
+              >
+                🥔 Přílohy
+              </button>
+              
               <div style="
                 margin:25px 0 0 0;
                 padding:20px;
@@ -1469,6 +1634,10 @@ if (actionsPanel) {
       renderObjednavky();
     };
 
+    document.getElementById('admin-prilohy-btn').onclick = () => {
+      renderPrilohy();
+    };
+  
   }
 };
 
@@ -1842,6 +2011,264 @@ function renderAddJidlo() {
   };
   document.getElementById('btn-cancel-add').onclick = () => window.renderMain();
 }
+
+window.renderPrilohy = async function renderPrilohy() {
+
+  if (currentUserRole !== 'admin') {
+    alert('Tuto sekci může používat pouze administrátor.');
+    return;
+  }
+
+  try {
+
+    const snapshot = await getDocs(collection(db, 'prilohy'));
+
+    const prilohy = snapshot.docs.map(docSnap => ({
+      id: docSnap.id,
+      ...docSnap.data()
+    }));
+
+    prilohy.sort((a, b) =>
+      String(a.nazev || '').localeCompare(
+        String(b.nazev || ''),
+        'cs'
+      )
+    );
+
+    let html = `
+      <div style="
+        max-width:700px;
+        margin:30px auto;
+        padding:25px;
+        background:#eaf3fa;
+        border:2px solid #b4e6ff;
+        border-radius:18px;
+        box-shadow:0 4px 20px #2196f322;
+      ">
+
+        <h2 style="
+          color:#1960b3;
+          text-align:center;
+          margin-top:0;
+        ">
+          🥔 Správa příloh
+        </h2>
+
+        <div style="
+          text-align:center;
+          margin-bottom:20px;
+        ">
+          <button
+            id="btn-pridat-prilohu"
+            style="
+              padding:11px 20px;
+              border:0;
+              border-radius:10px;
+              background:#28a745;
+              color:white;
+              font-weight:bold;
+              cursor:pointer;
+              margin-right:6px;
+            "
+          >
+            ➕ Přidat přílohu
+          </button>
+
+          <button
+            id="btn-zpet-prilohy"
+            style="
+              padding:11px 20px;
+              border:0;
+              border-radius:10px;
+              background:#6c757d;
+              color:white;
+              font-weight:bold;
+              cursor:pointer;
+            "
+          >
+            ← Zpět
+          </button>
+        </div>
+    `;
+
+    if (prilohy.length === 0) {
+
+      html += `
+        <div style="
+          padding:18px;
+          background:white;
+          border-radius:12px;
+          text-align:center;
+        ">
+          🥔 Zatím nemáš uloženou žádnou přílohu.
+        </div>
+      `;
+
+    } else {
+
+      html += `
+        <div style="
+          background:white;
+          border-radius:12px;
+          overflow:hidden;
+        ">
+      `;
+
+      prilohy.forEach(priloha => {
+
+        html += `
+          <div style="
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            gap:10px;
+            padding:12px 15px;
+            border-bottom:1px solid #e2edf7;
+          ">
+
+            <strong>
+              🥔 ${escapeHtml(priloha.nazev || 'Bez názvu')}
+            </strong>
+
+            <button
+              onclick="smazatPrilohu('${priloha.id}')"
+              style="
+                padding:7px 12px;
+                border:0;
+                border-radius:8px;
+                background:#d9534f;
+                color:white;
+                font-weight:bold;
+                cursor:pointer;
+              "
+            >
+              🗑️ Smazat
+            </button>
+
+          </div>
+        `;
+
+      });
+
+      html += `</div>`;
+    }
+
+    html += `
+      </div>
+    `;
+
+    document.getElementById('main-content').innerHTML = html;
+
+    document.getElementById('btn-zpet-prilohy').onclick = () => {
+      window.renderMain();
+    };
+
+    document.getElementById('btn-pridat-prilohu').onclick = () => {
+      pridatPrilohu();
+    };
+
+  } catch (error) {
+
+    console.error('CHYBA NAČÍTÁNÍ PŘÍLOH:', error);
+
+    document.getElementById('main-content').innerHTML = `
+      <div style="
+        max-width:600px;
+        margin:40px auto;
+        padding:20px;
+        background:#ffecec;
+        border:1px solid #ffb5b5;
+        border-radius:12px;
+        text-align:center;
+        color:#b00000;
+      ">
+        ❌ Přílohy se nepodařilo načíst.
+      </div>
+    `;
+
+  }
+};
+
+
+window.pridatPrilohu = async function pridatPrilohu() {
+
+  const nazev = prompt('Zadej název přílohy:');
+
+  if (!nazev) {
+    return;
+  }
+
+  const cistyNazev = nazev.trim();
+
+  if (!cistyNazev) {
+    return;
+  }
+
+  try {
+
+    const snapshot = await getDocs(collection(db, 'prilohy'));
+
+    const existuje = snapshot.docs.some(docSnap =>
+      String(docSnap.data().nazev || '').toLowerCase() ===
+      cistyNazev.toLowerCase()
+    );
+
+    if (existuje) {
+      alert('Tahle příloha už existuje.');
+      return;
+    }
+
+    await addDoc(collection(db, 'prilohy'), {
+      nazev: cistyNazev,
+      vytvorilUid: currentUser.uid,
+      vytvoreno: new Date().toISOString()
+    });
+
+    msg(`✅ Příloha "${cistyNazev}" byla přidána.`);
+
+    await renderPrilohy();
+
+  } catch (error) {
+
+    console.error('CHYBA PŘIDÁNÍ PŘÍLOHY:', error);
+
+    alert('❌ Přílohu se nepodařilo přidat.');
+  }
+};
+
+
+window.smazatPrilohu = async function smazatPrilohu(prilohaId) {
+
+  if (currentUserRole !== 'admin') {
+    alert('Tuto akci může provést pouze administrátor.');
+    return;
+  }
+
+  const potvrdit = confirm(
+    'Opravdu chceš tuto přílohu smazat?'
+  );
+
+  if (!potvrdit) {
+    return;
+  }
+
+  try {
+
+    await deleteDoc(
+      doc(db, 'prilohy', prilohaId)
+    );
+
+    msg('✅ Příloha byla smazána.');
+
+    await renderPrilohy();
+
+  } catch (error) {
+
+    console.error('CHYBA MAZÁNÍ PŘÍLOHY:', error);
+
+    alert('❌ Přílohu se nepodařilo smazat.');
+  }
+};
 
 function renderMenuGenerator() {
   const jidlaBezPolevek = jidla.filter(j => j.kategorie !== 'Polévky');
