@@ -675,7 +675,7 @@ async function nactiJidelnicek() {
                 padding:10px 14px;
                 border:0;
                 border-radius:10px;
-                background:${objednaneJidelnicky.has(jidlo.id) ? '#6c757d' : '#28a745'};
+                background:${objednaneJidelnicky.has(jidlo.id) ? '#28a745' : '#d9534f'};
                 color:white;
                 font-weight:bold;
                 cursor:pointer;
@@ -772,7 +772,7 @@ async function nactiJidelnicek() {
           objednaneJidelnicky.delete(jidelnicekId);
 
           button.innerText = '🍽️ Objednat';
-          button.style.background = '#28a745';
+          button.style.background = '#d9534f';
           button.style.cursor = 'pointer';
           button.disabled = false;
 
@@ -785,7 +785,7 @@ async function nactiJidelnicek() {
           alert('❌ Objednávku se nepodařilo zrušit.');
 
           button.innerText = '✅ Objednáno';
-          button.style.background = '#6c757d';
+          button.style.background = '#28a745';
           button.style.cursor = 'default';
           button.disabled = true;
         }
@@ -807,7 +807,7 @@ async function nactiJidelnicek() {
         objednaneJidelnicky.add(jidelnicekId);
 
         button.innerText = '✅ Objednáno';
-        button.style.background = '#6c757d';
+        button.style.background = '#28a745';
         button.style.cursor = 'pointer';
         button.disabled = false;
 
@@ -1658,13 +1658,39 @@ function renderLogin() {
       </h2>
 
       <div style="display:flex;gap:8px;margin-bottom:20px;">
-        <button id="login-tab" style="flex:1;padding:10px;border-radius:10px;border:0;background:#1663b2;color:white;">
+
+        <button
+          id="login-tab"
+          style="
+            flex:1;
+            padding:10px;
+            border-radius:10px;
+            border:0;
+            background:#1663b2;
+            color:white;
+            font-weight:bold;
+            cursor:pointer;
+          "
+        >
           Přihlášení
         </button>
 
-        <button id="register-tab" style="flex:1;padding:10px;border-radius:10px;border:1px solid #8ab7ec;background:white;color:#2061c3;">
+        <button
+          id="register-tab"
+          style="
+            flex:1;
+            padding:10px;
+            border-radius:10px;
+            border:1px solid #8ab7ec;
+            background:white;
+            color:#2061c3;
+            font-weight:normal;
+            cursor:pointer;
+          "
+        >
           Registrace
         </button>
+
       </div>
 
       <div id="auth-form"></div>
@@ -1674,11 +1700,36 @@ function renderLogin() {
 
   renderLoginForm();
 
-  document.getElementById('login-tab').onclick = () => {
+  const loginTab = document.getElementById('login-tab');
+  const registerTab = document.getElementById('register-tab');
+
+  loginTab.onclick = () => {
+
+    loginTab.style.background = '#1663b2';
+    loginTab.style.color = 'white';
+    loginTab.style.fontWeight = 'bold';
+    loginTab.style.border = '0';
+
+    registerTab.style.background = 'white';
+    registerTab.style.color = '#2061c3';
+    registerTab.style.fontWeight = 'normal';
+    registerTab.style.border = '1px solid #8ab7ec';
+
     renderLoginForm();
   };
 
-  document.getElementById('register-tab').onclick = () => {
+  registerTab.onclick = () => {
+
+    registerTab.style.background = '#28a745';
+    registerTab.style.color = 'white';
+    registerTab.style.fontWeight = 'bold';
+    registerTab.style.border = '0';
+
+    loginTab.style.background = 'white';
+    loginTab.style.color = '#2061c3';
+    loginTab.style.fontWeight = 'normal';
+    loginTab.style.border = '1px solid #8ab7ec';
+
     renderRegisterForm();
   };
 }
@@ -1908,68 +1959,226 @@ function escapeHtml(txt) {
 
 window.editJidlo = function(idx) {
   lastScrollTop = window.scrollY;
+
   const j = jidla[idx];
   const kategorieList = getKategorie();
+
   const html = `
-    <h2>Úprava jídla</h2>
-    <form id="edit-form">
-      <label>Název:<br>
-        <input type="text" id="edit-nazev" value="${escapeHtml(j.nazev)}" required>
-      </label><br><br>
-      <label>Kategorie:<br>
-        <select id="edit-kategorie" required>
-          ${kategorieList.map(cat => `<option value="${cat}" ${cat === j.kategorie ? 'selected' : ''}>${cat}</option>`).join('')}
-          <option value="_new_">+ Nová kategorie...</option>
-        </select>
-        <input type="text" id="new-kategorie" placeholder="Zadej novou kategorii" style="display:none; margin-top:6px;" />
-      </label><br><br>
-      <button type="submit">Uložit</button>
-      <button type="button" id="btn-cancel">Zrušit</button>
-    </form>
+    <div style="
+      max-width:600px;
+      margin:40px auto;
+      padding:25px;
+      background:#eaf3fa;
+      border:2px solid #b4e6ff;
+      border-radius:18px;
+      box-shadow:0 4px 20px #2196f322;
+    ">
+
+      <h2 style="
+        margin-top:0;
+        margin-bottom:25px;
+        color:#1960b3;
+        text-align:center;
+        font-size:24px;
+      ">
+        ✏️ Úprava jídla
+      </h2>
+
+      <form id="edit-form">
+
+        <label style="
+          display:block;
+          margin-bottom:18px;
+          font-weight:600;
+          color:#1c2430;
+        ">
+          Název:
+
+          <input
+            type="text"
+            id="edit-nazev"
+            value="${escapeHtml(j.nazev)}"
+            required
+            style="
+              display:block;
+              width:100%;
+              box-sizing:border-box;
+              margin-top:7px;
+              padding:11px 12px;
+              border:1px solid #a7cffa;
+              border-radius:9px;
+              background:white;
+              font-size:16px;
+              outline:none;
+            "
+          >
+        </label>
+
+        <label style="
+          display:block;
+          margin-bottom:18px;
+          font-weight:600;
+          color:#1c2430;
+        ">
+          Kategorie:
+
+          <select
+            id="edit-kategorie"
+            required
+            style="
+              display:block;
+              width:100%;
+              box-sizing:border-box;
+              margin-top:7px;
+              padding:11px 12px;
+              border:1px solid #a7cffa;
+              border-radius:9px;
+              background:white;
+              font-size:16px;
+              outline:none;
+            "
+          >
+
+            ${kategorieList.map(k => `
+              <option
+                value="${escapeHtml(k)}"
+                ${k === j.kategorie ? 'selected' : ''}
+              >
+                ${escapeHtml(k)}
+              </option>
+            `).join('')}
+
+            <option value="_new_">
+              ➕ Nová kategorie
+            </option>
+
+          </select>
+        </label>
+
+        <input
+          type="text"
+          id="edit-nova-kategorie"
+          placeholder="Zadej novou kategorii"
+          style="
+            display:none;
+            width:100%;
+            box-sizing:border-box;
+            margin-top:-5px;
+            margin-bottom:20px;
+            padding:11px 12px;
+            border:1px solid #a7cffa;
+            border-radius:9px;
+            background:white;
+            font-size:16px;
+            outline:none;
+          "
+        >
+
+        <div style="
+          display:flex;
+          justify-content:center;
+          gap:10px;
+          flex-wrap:wrap;
+        ">
+
+          <button
+            type="submit"
+            style="
+              padding:11px 22px;
+              border:0;
+              border-radius:10px;
+              background:#28a745;
+              color:white;
+              font-weight:bold;
+              font-size:15px;
+              cursor:pointer;
+              box-shadow:0 2px 6px #28a74533;
+            "
+          >
+            💾 Uložit
+          </button>
+
+          <button
+            type="button"
+            id="btn-cancel-edit"
+            style="
+              padding:11px 22px;
+              border:0;
+              border-radius:10px;
+              background:#d9534f;
+              color:white;
+              font-weight:bold;
+              font-size:15px;
+              cursor:pointer;
+              box-shadow:0 2px 6px #d9534f33;
+            "
+          >
+            ❌ Zrušit
+          </button>
+
+        </div>
+
+      </form>
+
+    </div>
   `;
+
   document.getElementById('main-content').innerHTML = html;
 
   const select = document.getElementById('edit-kategorie');
-  const newInput = document.getElementById('new-kategorie');
-  select.onchange = function () {
-    if (this.value === '_new_') {
-      newInput.style.display = 'inline-block';
+  const newInput = document.getElementById('edit-nova-kategorie');
+
+  select.onchange = () => {
+    if (select.value === '_new_') {
+      newInput.style.display = 'block';
       newInput.required = true;
       newInput.focus();
     } else {
       newInput.style.display = 'none';
       newInput.required = false;
+      newInput.value = '';
     }
   };
-  if (select.value === '_new_') {
-    newInput.style.display = 'inline-block';
-    newInput.required = true;
-    newInput.focus();
-  }
+
   document.getElementById('edit-form').onsubmit = function(e) {
     e.preventDefault();
-    const newNazev = document.getElementById('edit-nazev').value.trim();
+
+    const newNazev =
+      document.getElementById('edit-nazev').value.trim();
+
     let kategorie;
+
     if (select.value === '_new_') {
       kategorie = newInput.value.trim();
-      if (!kategorie) {
-        alert("Zadej název nové kategorie.");
-        newInput.focus();
-        return;
-      }
     } else {
       kategorie = select.value;
     }
-    j.nazev = newNazev;
-    j.kategorie = kategorie;
+
+    if (!newNazev || !kategorie) {
+      alert('Vyplň název a kategorii.');
+      return;
+    }
+
+    jidla[idx].nazev = newNazev;
+    jidla[idx].kategorie = kategorie;
+
     saveJidla();
+
     msg('Jídlo upraveno.');
+
     renderJidlaTable(lastFilterKategorie);
-    setTimeout(() => window.scrollTo(0, lastScrollTop), 0);
+
+    setTimeout(() => {
+      window.scrollTo(0, lastScrollTop);
+    }, 0);
   };
-  document.getElementById('btn-cancel').onclick = () => {
+
+  document.getElementById('btn-cancel-edit').onclick = () => {
     renderJidlaTable(lastFilterKategorie);
-    setTimeout(() => window.scrollTo(0, lastScrollTop), 0);
+
+    setTimeout(() => {
+      window.scrollTo(0, lastScrollTop);
+    }, 0);
   };
 };
 
@@ -1984,32 +2193,157 @@ window.deleteJidlo = function(idx) {
 }
 
 function renderAddJidlo() {
+
   const html = `
-    <h2>Přidat nové jídlo</h2>
-    <form id="add-form">
-      <label>Název:<br>
-        <input type="text" id="add-nazev" required>
-      </label><br><br>
-      <label>Kategorie:<br>
-        <input type="text" id="add-kategorie" required placeholder="Např. Omáčky, Bezmasá...">
-      </label><br><br>
-      <button type="submit">Přidat</button>
-      <button type="button" id="btn-cancel-add">Zrušit</button>
-    </form>
+    <div style="
+      max-width:600px;
+      margin:40px auto;
+      padding:25px;
+      background:#eaf3fa;
+      border:2px solid #b4e6ff;
+      border-radius:18px;
+      box-shadow:0 4px 20px #2196f322;
+    ">
+
+      <h2 style="
+        margin-top:0;
+        margin-bottom:25px;
+        color:#1960b3;
+        text-align:center;
+        font-size:24px;
+      ">
+        🍽️ Přidat nové jídlo
+      </h2>
+
+      <form id="add-form">
+
+        <label style="
+          display:block;
+          margin-bottom:18px;
+          font-weight:600;
+          color:#1c2430;
+        ">
+          Název:
+
+          <input
+            type="text"
+            id="add-nazev"
+            required
+            placeholder="Např. Hovězí guláš"
+            style="
+              display:block;
+              width:100%;
+              box-sizing:border-box;
+              margin-top:7px;
+              padding:11px 12px;
+              border:1px solid #a7cffa;
+              border-radius:9px;
+              background:white;
+              font-size:16px;
+              outline:none;
+            "
+          >
+        </label>
+
+        <label style="
+          display:block;
+          margin-bottom:25px;
+          font-weight:600;
+          color:#1c2430;
+        ">
+          Kategorie:
+
+          <input
+            type="text"
+            id="add-kategorie"
+            required
+            placeholder="Např. Omáčky, Bezmasá..."
+            style="
+              display:block;
+              width:100%;
+              box-sizing:border-box;
+              margin-top:7px;
+              padding:11px 12px;
+              border:1px solid #a7cffa;
+              border-radius:9px;
+              background:white;
+              font-size:16px;
+              outline:none;
+            "
+          >
+        </label>
+
+        <div style="
+          display:flex;
+          justify-content:center;
+          gap:10px;
+          flex-wrap:wrap;
+        ">
+
+          <button
+            type="submit"
+            style="
+              padding:11px 22px;
+              border:0;
+              border-radius:10px;
+              background:#28a745;
+              color:white;
+              font-weight:bold;
+              font-size:15px;
+              cursor:pointer;
+              box-shadow:0 2px 6px #28a74533;
+            "
+          >
+            ➕ Přidat
+          </button>
+
+          <button
+            type="button"
+            id="btn-cancel-add"
+            style="
+              padding:11px 22px;
+              border:0;
+              border-radius:10px;
+              background:#d9534f;
+              color:white;
+              font-weight:bold;
+              font-size:15px;
+              cursor:pointer;
+              box-shadow:0 2px 6px #d9534f33;
+            "
+          >
+            ❌ Zrušit
+          </button>
+
+        </div>
+
+      </form>
+
+    </div>
   `;
+
   document.getElementById('main-content').innerHTML = html;
+
   document.getElementById('add-form').onsubmit = function(e) {
     e.preventDefault();
+
     jidla.push({
       nazev: document.getElementById('add-nazev').value.trim(),
       kategorie: document.getElementById('add-kategorie').value.trim()
     });
+
     saveJidla();
+
     msg('Jídlo přidáno.');
+
     renderJidlaTable(lastFilterKategorie);
+
     setTimeout(() => window.scrollTo(0, lastScrollTop), 0);
   };
-  document.getElementById('btn-cancel-add').onclick = () => window.renderMain();
+
+  document.getElementById('btn-cancel-add').onclick = () => {
+    window.renderMain();
+  };
 }
 
 window.renderPrilohy = async function renderPrilohy() {
