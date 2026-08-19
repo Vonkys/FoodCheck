@@ -2476,6 +2476,9 @@ window.deleteJidlo = async function(idx) {
     return;
   }
 
+  // Zapamatujeme si přesnou pozici stránky
+  const scrollPozice = window.scrollY;
+
   const jidlo = jidla[idx];
 
   if (!jidlo) {
@@ -2485,24 +2488,25 @@ window.deleteJidlo = async function(idx) {
 
   try {
 
-    // Smažeme pouze konkrétní dokument ve Firebase
+    // Smažeme pouze konkrétní jídlo z Firebase
     if (jidlo.id) {
       await deleteDoc(
         doc(db, 'jidla', jidlo.id)
       );
     }
 
-    // Až po úspěšném smazání z Firebase
-    // odstraníme jídlo i z lokálního pole
+    // Odstraníme ho i z lokálního seznamu
     jidla.splice(idx, 1);
 
     msg('✅ Jídlo smazáno.');
 
+    // Překreslíme tabulku
     renderJidlaTable(lastFilterKategorie);
 
-    setTimeout(() => {
-      window.scrollTo(0, lastScrollTop);
-    }, 0);
+    // Vrátíme stránku přesně tam, kde byla
+    requestAnimationFrame(() => {
+      window.scrollTo(0, scrollPozice);
+    });
 
   } catch (error) {
 
@@ -2513,7 +2517,6 @@ window.deleteJidlo = async function(idx) {
     );
   }
 };
-
 function renderAddJidlo() {
 
   const html = `
