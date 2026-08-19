@@ -327,22 +327,42 @@ async function inicializujJidla() {
 
 async function saveJidla() {
   try {
-    const snapshot = await getDocs(collection(db, 'jidla'));
-
-    for (const item of snapshot.docs) {
-      await deleteDoc(item.ref);
-    }
 
     for (const jidlo of jidla) {
-      await addDoc(collection(db, 'jidla'), {
-        nazev: jidlo.nazev,
-        kategorie: jidlo.kategorie
-      });
+
+      // Existující jídlo → pouze aktualizujeme jeho dokument
+      if (jidlo.id) {
+
+        await updateDoc(
+          doc(db, 'jidla', jidlo.id),
+          {
+            nazev: jidlo.nazev,
+            kategorie: jidlo.kategorie
+          }
+        );
+
+      } else {
+
+        // Nové jídlo → vytvoříme nový dokument
+        const novaRef = await addDoc(
+          collection(db, 'jidla'),
+          {
+            nazev: jidlo.nazev,
+            kategorie: jidlo.kategorie
+          }
+        );
+
+        // Uložíme Firebase ID i do lokálních dat
+        jidlo.id = novaRef.id;
+      }
     }
 
     console.log('Jídla uložena do Firestore.');
+
   } catch (error) {
+
     console.error('CHYBA UKLÁDÁNÍ JÍDEL:', error);
+
     alert('❌ Jídla se nepodařilo uložit do online databáze.');
   }
 }
@@ -2450,15 +2470,49 @@ window.editJidlo = function(idx) {
   };
 };
 
-window.deleteJidlo = function(idx) {
-  if (confirm('Opravdu smazat toto jídlo?')) {
-    jidla.splice(idx, 1);
-    saveJidla();
-    msg('Jídlo smazáno.');
-    renderJidlaTable(lastFilterKategorie);
-    setTimeout(() => window.scrollTo(0, lastScrollTop), 0);
+window.deleteJidlo = async function(idx) {
+
+  if (!confirm('Opravdu smazat toto jídlo?')) {
+    return;
   }
-}
+
+  const jidlo = jidla[idx];
+
+  if (!jidlo) {
+    alert('❌ Jídlo nebylo nalezeno.');
+    return;
+  }
+
+  try {
+
+    // Smažeme pouze konkrétní dokument ve Firebase
+    if (jidlo.id) {
+      await deleteDoc(
+        doc(db, 'jidla', jidlo.id)
+      );
+    }
+
+    // Až po úspěšném smazání z Firebase
+    // odstraníme jídlo i z lokálního pole
+    jidla.splice(idx, 1);
+
+    msg('✅ Jídlo smazáno.');
+
+    renderJidlaTable(lastFilterKategorie);
+
+    setTimeout(() => {
+      window.scrollTo(0, lastScrollTop);
+    }, 0);
+
+  } catch (error) {
+
+    console.error('CHYBA MAZÁNÍ JÍDLA:', error);
+
+    alert(
+      '❌ Jídlo se nepodařilo smazat z databáze.'
+    );
+  }
+};
 
 function renderAddJidlo() {
 
