@@ -2292,17 +2292,32 @@ window.renderPokladna = async function renderPokladna() {
 
 
                                 <div style="
-                                  font-size:16px;
-                                  font-weight:700;
-                                  color:#222;
-                                ">
-                                  🍽️ ${
-                                    escapeHtml(
-                                      obj.nazev ||
-                                      'Bez názvu'
-                                    )
-                                  }
-                                </div>
+  font-size:16px;
+  font-weight:700;
+  color:#222;
+">
+  🍽️ ${
+    escapeHtml(
+      obj.nazev ||
+      'Bez názvu'
+    )
+  }
+
+  ${
+    obj.prilohaNazev
+      ? `
+        <div style="
+          font-size:14px;
+          color:#1960b3;
+          margin-top:5px;
+          font-weight:600;
+        ">
+          🥔 Příloha: ${escapeHtml(obj.prilohaNazev)}
+        </div>
+      `
+      : ''
+  }
+</div>
 
 
                                 <div style="
