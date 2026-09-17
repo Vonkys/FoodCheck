@@ -1658,7 +1658,7 @@ window.renderObjednavky = async function renderObjednavky() {
 
 window.renderPokladna = async function renderPokladna() {
 
-  const vybranyUzivatelUid =
+  let vybranyUzivatelUid =
     currentUserRole === 'admin'
       ? (window.pokladnaVybranyUzivatelUid || '')
       : currentUser.uid;
@@ -1708,112 +1708,6 @@ window.renderPokladna = async function renderPokladna() {
 
 
     // =========================================
-    // ID ÚČETNÍHO OBDOBÍ
-    // =========================================
-
-    const pokladnaId =
-      `${vybranyUzivatelUid}_${datumOd}_${datumDo}`;
-
-
-    // =========================================
-    // NAČTENÍ OBJEDNÁVEK
-    // =========================================
-
-    let snapshot;
-
-    const uidProNacteni =
-      currentUserRole === 'admin'
-        ? vybranyUzivatelUid
-        : currentUser.uid;
-
-    const q = query(
-      collection(db, 'objednavky'),
-      where('uid', '==', uidProNacteni)
-    );
-
-    snapshot = await getDocs(q);
-
-    const objednavky = snapshot.docs.map(docSnap => ({
-      id: docSnap.id,
-      ...docSnap.data()
-    }));
-
-
-    // =========================================
-    // OBJEDNÁVKY V ÚČETNÍM OBDOBÍ
-    // =========================================
-
-    const objednavkyObdobi = objednavky.filter(obj => {
-
-      const datum = String(obj.datum || '');
-
-      return datum >= datumOd && datum <= datumDo;
-
-    });
-
-
-    // =========================================
-    // VÝPOČET
-    // =========================================
-
-    const pocetObedu = objednavkyObdobi.length;
-
-    const celkem = objednavkyObdobi.reduce(
-      (soucet, obj) => {
-
-        return soucet + Number(obj.cena || 0);
-
-      },
-      0
-    );
-
-
-    // =========================================
-    // NAČTENÍ ÚDAJE "PŘIJATO"
-    // =========================================
-
-    const pokladnaRef =
-      doc(db, 'pokladna', pokladnaId);
-
-    const pokladnaSnap =
-      await getDoc(pokladnaRef);
-
-    let prijato = 0;
-
-    if (pokladnaSnap.exists()) {
-
-      const data = pokladnaSnap.data();
-
-      prijato = Number(data.prijato || 0);
-
-    }
-
-
-    // =========================================
-    // VÝPOČET ZBÝVÁ / PŘEPLATEK
-    // =========================================
-
-    const rozdil = celkem - prijato;
-
-    const jePreplatek = rozdil < 0;
-
-    const castkaRozdilu = Math.abs(rozdil);
-
-
-    // =========================================
-    // FORMÁT DATA
-    // =========================================
-
-    const formatDatum = datum => {
-
-      const [rok, mesic, den] = datum.split('-');
-
-      return `${den}.${mesic}.${rok}`;
-
-    };
-
-
-    // =========================================
     // NAČTENÍ UŽIVATELŮ PRO ADMINA
     // =========================================
 
@@ -1838,7 +1732,162 @@ window.renderPokladna = async function renderPokladna() {
           )
         );
 
+
+      // Pokud je pouze jeden uživatel,
+      // automaticky ho vybereme
+      if (
+        uzivatele.length === 1 &&
+        !window.pokladnaVybranyUzivatelUid
+      ) {
+
+        window.pokladnaVybranyUzivatelUid =
+          uzivatele[0].id;
+
+      }
+
+      // Po případném automatickém výběru
+      // znovu nastavíme aktuální UID
+      vybranyUzivatelUid =
+        window.pokladnaVybranyUzivatelUid || '';
+
     }
+
+
+    // =========================================
+    // POKLADNA ID
+    // =========================================
+
+    const pokladnaId =
+      `${vybranyUzivatelUid}_${datumOd}_${datumDo}`;
+
+
+    // =========================================
+    // NAČTENÍ OBJEDNÁVEK
+    // =========================================
+
+    let objednavky = [];
+
+    // Admin bez vybraného uživatele
+    // zatím nic nenačítá
+    if (vybranyUzivatelUid) {
+
+      const q = query(
+        collection(db, 'objednavky'),
+        where('uid', '==', vybranyUzivatelUid)
+      );
+
+      const snapshot =
+        await getDocs(q);
+
+      objednavky = snapshot.docs.map(docSnap => ({
+        id: docSnap.id,
+        ...docSnap.data()
+      }));
+
+    }
+
+
+    // =========================================
+    // OBJEDNÁVKY V ÚČETNÍM OBDOBÍ
+    // =========================================
+
+    const objednavkyObdobi =
+      objednavky.filter(obj => {
+
+        const datum =
+          String(obj.datum || '');
+
+        return (
+          datum >= datumOd &&
+          datum <= datumDo
+        );
+
+      });
+
+
+    // =========================================
+    // VÝPOČET
+    // =========================================
+
+    const pocetObedu =
+      objednavkyObdobi.length;
+
+    const celkem =
+      objednavkyObdobi.reduce(
+        (soucet, obj) => {
+
+          return soucet +
+            Number(obj.cena || 0);
+
+        },
+        0
+      );
+
+
+    // =========================================
+    // NAČTENÍ ÚDAJE "PŘIJATO"
+    // =========================================
+
+    let prijato = 0;
+
+    if (vybranyUzivatelUid) {
+
+      const pokladnaRef =
+        doc(
+          db,
+          'pokladna',
+          pokladnaId
+        );
+
+      const pokladnaSnap =
+        await getDoc(pokladnaRef);
+
+      if (pokladnaSnap.exists()) {
+
+        const data =
+          pokladnaSnap.data();
+
+        prijato =
+          Number(data.prijato || 0);
+
+      }
+
+    }
+
+
+    // =========================================
+    // VÝPOČET ZBÝVÁ / PŘEPLATEK
+    // =========================================
+
+    const rozdil =
+      celkem - prijato;
+
+    const jePreplatek =
+      rozdil < 0;
+
+    const castkaRozdilu =
+      Math.abs(rozdil);
+
+
+    // =========================================
+    // FORMÁT DATA
+    // =========================================
+
+    const formatDatum = datum => {
+
+      const casti =
+        String(datum || '').split('-');
+
+      if (casti.length !== 3) {
+        return datum || '';
+      }
+
+      const [rok, mesic, den] =
+        casti;
+
+      return `${den}.${mesic}.${rok}`;
+
+    };
 
 
     // =========================================
@@ -1846,7 +1895,10 @@ window.renderPokladna = async function renderPokladna() {
     // =========================================
 
     const container =
-      document.getElementById('main-content');
+      document.getElementById(
+        'main-content'
+      );
+
 
     container.innerHTML = `
 
@@ -1873,6 +1925,7 @@ window.renderPokladna = async function renderPokladna() {
                 👤 Vyber uživatele:
               </label>
 
+
               <select
                 id="pokladna-uzivatel"
                 style="
@@ -1889,6 +1942,7 @@ window.renderPokladna = async function renderPokladna() {
                 <option value="">
                   -- Vyber uživatele --
                 </option>
+
 
                 ${uzivatele.map(user => `
                   <option
@@ -1958,296 +2012,324 @@ window.renderPokladna = async function renderPokladna() {
         </div>
 
 
-        <!-- HLAVNÍ ÚDAJE -->
+        ${
+          currentUserRole === 'admin' &&
+          !vybranyUzivatelUid
+            ? `
+              <div style="
+                padding:20px;
+                background:white;
+                border-radius:12px;
+                text-align:center;
+                color:#777;
+                border:1px solid #cfe8fa;
+              ">
+                👤 Vyber uživatele pro zobrazení jeho pokladny.
+              </div>
+            `
+            : `
+              <!-- HLAVNÍ ÚDAJE -->
 
-        <div style="
-          display:grid;
-          grid-template-columns:repeat(
-            auto-fit,
-            minmax(200px,1fr)
-          );
-          gap:15px;
-        ">
-
-
-          <!-- POČET OBĚDŮ -->
-
-          <div style="
-            background:white;
-            padding:20px;
-            border-radius:14px;
-            text-align:center;
-            border:1px solid #cfe8fa;
-          ">
-
-            <div style="
-              font-size:14px;
-              color:#666;
-              margin-bottom:8px;
-            ">
-              🍽️ Počet objednaných obědů
-            </div>
-
-            <div style="
-              font-size:32px;
-              font-weight:bold;
-              color:#1960b3;
-            ">
-              ${pocetObedu}
-            </div>
-
-          </div>
+              <div style="
+                display:grid;
+                grid-template-columns:repeat(
+                  auto-fit,
+                  minmax(200px,1fr)
+                );
+                gap:15px;
+              ">
 
 
-          <!-- CELKEM K ÚHRADĚ -->
+                <!-- POČET OBĚDŮ -->
 
-          <div style="
-            background:white;
-            padding:20px;
-            border-radius:14px;
-            text-align:center;
-            border:1px solid #cfe8fa;
-          ">
-
-            <div style="
-              font-size:14px;
-              color:#666;
-              margin-bottom:8px;
-            ">
-              💵 Celkem k úhradě
-            </div>
-
-            <div style="
-              font-size:32px;
-              font-weight:bold;
-              color:#28a745;
-            ">
-              ${celkem.toLocaleString('cs-CZ')} Kč
-            </div>
-
-          </div>
-
-
-          <!-- PŘIJATO -->
-
-          <div style="
-            background:white;
-            padding:20px;
-            border-radius:14px;
-            text-align:center;
-            border:1px solid #cfe8fa;
-          ">
-
-            <div style="
-              font-size:14px;
-              color:#666;
-              margin-bottom:8px;
-            ">
-              💰 Přijato
-            </div>
-
-            ${
-              currentUserRole === 'admin'
-                ? `
-                  <input
-                    id="pokladna-prijato"
-                    type="number"
-                    min="0"
-                    step="1"
-                    value="${prijato}"
-                    style="
-                      width:150px;
-                      box-sizing:border-box;
-                      padding:8px;
-                      font-size:24px;
-                      font-weight:bold;
-                      text-align:center;
-                      border:2px solid #b4e6ff;
-                      border-radius:10px;
-                      color:#1960b3;
-                    "
-                  >
+                <div style="
+                  background:white;
+                  padding:20px;
+                  border-radius:14px;
+                  text-align:center;
+                  border:1px solid #cfe8fa;
+                ">
 
                   <div style="
-                    margin-top:5px;
                     font-size:14px;
                     color:#666;
+                    margin-bottom:8px;
                   ">
-                    Kč
+                    🍽️ Počet objednaných obědů
                   </div>
 
-                  <button
-                    id="btn-ulozit-prijato"
-                    style="
-                      margin-top:10px;
-                      padding:8px 16px;
-                      border:0;
-                      border-radius:10px;
-                      background:#1960b3;
-                      color:white;
-                      font-weight:bold;
-                      cursor:pointer;
-                    "
-                  >
-                    💾 Uložit
-                  </button>
-                `
-                : `
                   <div style="
                     font-size:32px;
                     font-weight:bold;
                     color:#1960b3;
                   ">
-                    ${prijato.toLocaleString('cs-CZ')} Kč
+                    ${pocetObedu}
                   </div>
-                `
-            }
 
-          </div>
-
-        </div>
-
-
-        <!-- ZBÝVÁ / PŘEPLATEK -->
-
-        <div style="
-          margin-top:20px;
-          padding:20px;
-          background:white;
-          border-radius:14px;
-          border:1px solid #cfe8fa;
-          text-align:center;
-        ">
-
-          <div style="
-            font-size:15px;
-            color:#666;
-            margin-bottom:8px;
-          ">
-            ${
-              jePreplatek
-                ? '💚 Přeplatek'
-                : '💳 Zbývá uhradit'
-            }
-          </div>
-
-          <div style="
-            font-size:36px;
-            font-weight:bold;
-            color:${jePreplatek ? '#28a745' : '#dc3545'};
-          ">
-            ${castkaRozdilu.toLocaleString('cs-CZ')} Kč
-          </div>
-
-        </div>
-
-
-        <!-- ========================================= -->
-        <!-- SEZNAM OBJEDNANÝCH OBĚDŮ -->
-        <!-- ========================================= -->
-
-        <div style="
-          margin-top:25px;
-          padding:20px;
-          background:white;
-          border-radius:14px;
-          border:1px solid #cfe8fa;
-        ">
-
-          <h3 style="
-            margin:0 0 15px 0;
-            color:#1960b3;
-            text-align:center;
-          ">
-            🍽️ Objednané obědy
-          </h3>
-
-
-          ${
-            objednavkyObdobi.length === 0
-              ? `
-                <div style="
-                  padding:15px;
-                  text-align:center;
-                  color:#777;
-                ">
-                  📭 V tomto účetním období není žádný
-                  objednaný oběd.
                 </div>
-              `
-              : `
+
+
+                <!-- CELKEM K ÚHRADĚ -->
+
                 <div style="
-                  display:flex;
-                  flex-direction:column;
-                  gap:8px;
+                  background:white;
+                  padding:20px;
+                  border-radius:14px;
+                  text-align:center;
+                  border:1px solid #cfe8fa;
                 ">
+
+                  <div style="
+                    font-size:14px;
+                    color:#666;
+                    margin-bottom:8px;
+                  ">
+                    💵 Celkem k úhradě
+                  </div>
+
+                  <div style="
+                    font-size:32px;
+                    font-weight:bold;
+                    color:#28a745;
+                  ">
+                    ${celkem.toLocaleString('cs-CZ')} Kč
+                  </div>
+
+                </div>
+
+
+                <!-- PŘIJATO -->
+
+                <div style="
+                  background:white;
+                  padding:20px;
+                  border-radius:14px;
+                  text-align:center;
+                  border:1px solid #cfe8fa;
+                ">
+
+                  <div style="
+                    font-size:14px;
+                    color:#666;
+                    margin-bottom:8px;
+                  ">
+                    💰 Přijato
+                  </div>
+
 
                   ${
-                    objednavkyObdobi
-                      .slice()
-                      .sort((a, b) =>
-                        String(a.datum || '').localeCompare(
-                          String(b.datum || '')
-                        )
-                      )
-                      .map(obj => `
-                        <div style="
-                          display:grid;
-                          grid-template-columns:120px 1fr auto;
-                          align-items:center;
-                          gap:12px;
-                          padding:12px 14px;
-                          background:#f7fbff;
-                          border:1px solid #e2edf7;
-                          border-radius:10px;
-                        ">
-
-                          <div style="
-                            font-weight:700;
+                    currentUserRole === 'admin'
+                      ? `
+                        <input
+                          id="pokladna-prijato"
+                          type="number"
+                          min="0"
+                          step="1"
+                          value="${prijato}"
+                          style="
+                            width:150px;
+                            box-sizing:border-box;
+                            padding:8px;
+                            font-size:24px;
+                            font-weight:bold;
+                            text-align:center;
+                            border:2px solid #b4e6ff;
+                            border-radius:10px;
                             color:#1960b3;
-                          ">
-                            📅 ${
-                              obj.datum
-                                ? formatDatum(obj.datum)
-                                : 'Bez data'
-                            }
-                          </div>
+                          "
+                        >
 
-
-                          <div style="
-                            font-size:16px;
-                            font-weight:700;
-                            color:#222;
-                          ">
-                            🍽️ ${
-                              escapeHtml(
-                                obj.nazev || 'Bez názvu'
-                              )
-                            }
-                          </div>
-
-
-                          <div style="
-                            font-weight:700;
-                            color:#28a745;
-                            white-space:nowrap;
-                          ">
-                            ${
-                              Number(obj.cena || 0)
-                                .toLocaleString('cs-CZ')
-                            } Kč
-                          </div>
-
+                        <div style="
+                          margin-top:5px;
+                          font-size:14px;
+                          color:#666;
+                        ">
+                          Kč
                         </div>
-                      `)
-                      .join('')
+
+
+                        <button
+                          id="btn-ulozit-prijato"
+                          style="
+                            margin-top:10px;
+                            padding:8px 16px;
+                            border:0;
+                            border-radius:10px;
+                            background:#1960b3;
+                            color:white;
+                            font-weight:bold;
+                            cursor:pointer;
+                          "
+                        >
+                          💾 Uložit
+                        </button>
+                      `
+                      : `
+                        <div style="
+                          font-size:32px;
+                          font-weight:bold;
+                          color:#1960b3;
+                        ">
+                          ${prijato.toLocaleString('cs-CZ')} Kč
+                        </div>
+                      `
                   }
 
                 </div>
-              `
-          }
 
-        </div>
+              </div>
+
+
+              <!-- ZBÝVÁ / PŘEPLATEK -->
+
+              <div style="
+                margin-top:20px;
+                padding:20px;
+                background:white;
+                border-radius:14px;
+                border:1px solid #cfe8fa;
+                text-align:center;
+              ">
+
+                <div style="
+                  font-size:15px;
+                  color:#666;
+                  margin-bottom:8px;
+                ">
+                  ${
+                    jePreplatek
+                      ? '💚 Přeplatek'
+                      : '💳 Zbývá uhradit'
+                  }
+                </div>
+
+
+                <div style="
+                  font-size:36px;
+                  font-weight:bold;
+                  color:${
+                    jePreplatek
+                      ? '#28a745'
+                      : '#dc3545'
+                  };
+                ">
+                  ${castkaRozdilu.toLocaleString('cs-CZ')} Kč
+                </div>
+
+              </div>
+
+
+              <!-- OBJEDNANÉ OBĚDY -->
+
+              <div style="
+                margin-top:25px;
+                padding:20px;
+                background:white;
+                border-radius:14px;
+                border:1px solid #cfe8fa;
+              ">
+
+                <h3 style="
+                  margin:0 0 15px 0;
+                  color:#1960b3;
+                  text-align:center;
+                ">
+                  🍽️ Objednané obědy
+                </h3>
+
+
+                ${
+                  objednavkyObdobi.length === 0
+                    ? `
+                      <div style="
+                        padding:15px;
+                        text-align:center;
+                        color:#777;
+                      ">
+                        📭 V tomto účetním období není žádný
+                        objednaný oběd.
+                      </div>
+                    `
+                    : `
+                      <div style="
+                        display:flex;
+                        flex-direction:column;
+                        gap:8px;
+                      ">
+
+                        ${
+                          objednavkyObdobi
+                            .slice()
+                            .sort((a, b) =>
+                              String(a.datum || '')
+                                .localeCompare(
+                                  String(b.datum || '')
+                                )
+                            )
+                            .map(obj => `
+                              <div style="
+                                display:grid;
+                                grid-template-columns:120px 1fr auto;
+                                align-items:center;
+                                gap:12px;
+                                padding:12px 14px;
+                                background:#f7fbff;
+                                border:1px solid #e2edf7;
+                                border-radius:10px;
+                              ">
+
+
+                                <div style="
+                                  font-weight:700;
+                                  color:#1960b3;
+                                ">
+                                  📅 ${
+                                    obj.datum
+                                      ? formatDatum(obj.datum)
+                                      : 'Bez data'
+                                  }
+                                </div>
+
+
+                                <div style="
+                                  font-size:16px;
+                                  font-weight:700;
+                                  color:#222;
+                                ">
+                                  🍽️ ${
+                                    escapeHtml(
+                                      obj.nazev ||
+                                      'Bez názvu'
+                                    )
+                                  }
+                                </div>
+
+
+                                <div style="
+                                  font-weight:700;
+                                  color:#28a745;
+                                  white-space:nowrap;
+                                ">
+                                  ${
+                                    Number(obj.cena || 0)
+                                      .toLocaleString('cs-CZ')
+                                  } Kč
+                                </div>
+
+
+                              </div>
+                            `)
+                            .join('')
+                        }
+
+                      </div>
+                    `
+                }
+
+              </div>
+
+            `
+        }
 
 
         <!-- ZPĚT -->
@@ -2281,7 +2363,9 @@ window.renderPokladna = async function renderPokladna() {
     if (currentUserRole === 'admin') {
 
       const selectUzivatel =
-        document.getElementById('pokladna-uzivatel');
+        document.getElementById(
+          'pokladna-uzivatel'
+        );
 
       if (selectUzivatel) {
 
@@ -2303,63 +2387,82 @@ window.renderPokladna = async function renderPokladna() {
     // ULOŽENÍ PŘIJATÉ ČÁSTKY - ADMIN
     // =========================================
 
-    if (currentUserRole === 'admin') {
+    if (
+      currentUserRole === 'admin' &&
+      vybranyUzivatelUid
+    ) {
 
-      document.getElementById(
-        'btn-ulozit-prijato'
-      ).onclick = async () => {
+      const btnUlozit =
+        document.getElementById(
+          'btn-ulozit-prijato'
+        );
 
-        try {
+      if (btnUlozit) {
 
-          const input =
-            document.getElementById(
-              'pokladna-prijato'
-            );
+        btnUlozit.onclick =
+          async () => {
 
-          const novaCastka =
-            Number(input.value || 0);
+            try {
+
+              const input =
+                document.getElementById(
+                  'pokladna-prijato'
+                );
+
+              const novaCastka =
+                Number(input.value || 0);
 
 
-          await setDoc(
-            pokladnaRef,
-            {
-              obdobiOd: datumOd,
-              obdobiDo: datumDo,
-              prijato: novaCastka,
-              updatedAt: new Date(),
-              updatedByUid:
-                currentUser?.uid || '',
-              updatedByEmail:
-                currentUser?.email || ''
-            },
-            {
-              merge: true
+              const pokladnaRef =
+                doc(
+                  db,
+                  'pokladna',
+                  pokladnaId
+                );
+
+
+              await setDoc(
+                pokladnaRef,
+                {
+                  obdobiOd: datumOd,
+                  obdobiDo: datumDo,
+                  prijato: novaCastka,
+                  updatedAt: new Date(),
+                  updatedByUid:
+                    currentUser?.uid || '',
+                  updatedByEmail:
+                    currentUser?.email || ''
+                },
+                {
+                  merge: true
+                }
+              );
+
+
+              alert(
+                '✅ Přijatá částka byla uložena.'
+              );
+
+
+              renderPokladna();
+
+
+            } catch (error) {
+
+              console.error(
+                'CHYBA ULOŽENÍ POKLADNY:',
+                error
+              );
+
+              alert(
+                '❌ Přijatou částku se nepodařilo uložit.'
+              );
+
             }
-          );
 
+          };
 
-          alert(
-            '✅ Přijatá částka byla uložena.'
-          );
-
-
-          renderPokladna();
-
-
-        } catch (error) {
-
-          console.error(
-            'CHYBA ULOŽENÍ POKLADNY:',
-            error
-          );
-
-          alert(
-            '❌ Přijatou částku se nepodařilo uložit.'
-          );
-
-        }
-
-      };
+      }
 
     }
 
@@ -2368,13 +2471,20 @@ window.renderPokladna = async function renderPokladna() {
     // TLAČÍTKO ZPĚT
     // =========================================
 
-    document.getElementById(
-      'btn-zpet-pokladna'
-    ).onclick = () => {
+    const btnZpet =
+      document.getElementById(
+        'btn-zpet-pokladna'
+      );
 
-      renderMain();
+    if (btnZpet) {
 
-    };
+      btnZpet.onclick = () => {
+
+        renderMain();
+
+      };
+
+    }
 
 
   } catch (error) {
