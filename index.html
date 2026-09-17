@@ -1658,6 +1658,11 @@ window.renderObjednavky = async function renderObjednavky() {
 
 window.renderPokladna = async function renderPokladna() {
 
+  const vybranyUzivatelUid =
+    currentUserRole === 'admin'
+      ? (window.pokladnaVybranyUzivatelUid || '')
+      : currentUser.uid;
+
   try {
 
     // =========================================
@@ -1691,7 +1696,9 @@ window.renderPokladna = async function renderPokladna() {
         mesicDo = 0;
         rokDo++;
       }
+
     }
+
 
     const datumOd =
       `${rokOd}-${String(mesicOd + 1).padStart(2, '0')}-11`;
@@ -1704,37 +1711,32 @@ window.renderPokladna = async function renderPokladna() {
     // ID ÚČETNÍHO OBDOBÍ
     // =========================================
 
-    const pokladnaId = `${datumOd}_${datumDo}`;
-
+    const pokladnaId =
+      `${vybranyUzivatelUid}_${datumOd}_${datumDo}`;
 
 
     // =========================================
-// NAČTENÍ OBJEDNÁVEK
-// =========================================
+    // NAČTENÍ OBJEDNÁVEK
+    // =========================================
 
-let snapshot;
+    let snapshot;
 
-if (currentUserRole === 'admin') {
+    const uidProNacteni =
+      currentUserRole === 'admin'
+        ? vybranyUzivatelUid
+        : currentUser.uid;
 
-  snapshot = await getDocs(
-    collection(db, 'objednavky')
-  );
+    const q = query(
+      collection(db, 'objednavky'),
+      where('uid', '==', uidProNacteni)
+    );
 
-} else {
+    snapshot = await getDocs(q);
 
-  const q = query(
-    collection(db, 'objednavky'),
-    where('uid', '==', currentUser.uid)
-  );
-
-  snapshot = await getDocs(q);
-
-}
-
-const objednavky = snapshot.docs.map(docSnap => ({
-  id: docSnap.id,
-  ...docSnap.data()
-}));
+    const objednavky = snapshot.docs.map(docSnap => ({
+      id: docSnap.id,
+      ...docSnap.data()
+    }));
 
 
     // =========================================
@@ -1812,6 +1814,34 @@ const objednavky = snapshot.docs.map(docSnap => ({
 
 
     // =========================================
+    // NAČTENÍ UŽIVATELŮ PRO ADMINA
+    // =========================================
+
+    let uzivatele = [];
+
+    if (currentUserRole === 'admin') {
+
+      const usersSnapshot = await getDocs(
+        collection(db, 'users')
+      );
+
+      uzivatele = usersSnapshot.docs
+        .map(docSnap => ({
+          id: docSnap.id,
+          ...docSnap.data()
+        }))
+        .filter(user => user.role === 'user')
+        .sort((a, b) =>
+          String(a.name || '').localeCompare(
+            String(b.name || ''),
+            'cs'
+          )
+        );
+
+    }
+
+
+    // =========================================
     // VYKRESLENÍ POKLADNY
     // =========================================
 
@@ -1819,6 +1849,73 @@ const objednavky = snapshot.docs.map(docSnap => ({
       document.getElementById('main-content');
 
     container.innerHTML = `
+
+      ${
+        currentUserRole === 'admin'
+          ? `
+            <!-- VÝBĚR UŽIVATELE -->
+
+            <div style="
+              max-width:800px;
+              margin:30px auto 0 auto;
+              padding:15px;
+              background:#f7fbff;
+              border:1px solid #cfe8fa;
+              border-radius:12px;
+            ">
+
+              <label style="
+                display:block;
+                margin-bottom:8px;
+                font-weight:700;
+                color:#1960b3;
+              ">
+                👤 Vyber uživatele:
+              </label>
+
+              <select
+                id="pokladna-uzivatel"
+                style="
+                  width:100%;
+                  box-sizing:border-box;
+                  padding:10px;
+                  border:1px solid #a7cffa;
+                  border-radius:9px;
+                  font-size:16px;
+                  background:white;
+                "
+              >
+
+                <option value="">
+                  -- Vyber uživatele --
+                </option>
+
+                ${uzivatele.map(user => `
+                  <option
+                    value="${user.id}"
+                    ${
+                      window.pokladnaVybranyUzivatelUid === user.id
+                        ? 'selected'
+                        : ''
+                    }
+                  >
+                    ${escapeHtml(
+                      user.name ||
+                      user.email ||
+                      'Bez jména'
+                    )}
+                  </option>
+                `).join('')}
+
+              </select>
+
+            </div>
+          `
+          : ''
+      }
+
+
+      <!-- HLAVNÍ POKLADNA -->
 
       <div style="
         max-width:800px;
@@ -1829,6 +1926,7 @@ const objednavky = snapshot.docs.map(docSnap => ({
         border-radius:18px;
         box-shadow:0 4px 20px #2196f322;
       ">
+
 
         <h2 style="
           color:#1960b3;
@@ -1851,10 +1949,12 @@ const objednavky = snapshot.docs.map(docSnap => ({
           font-weight:bold;
           color:#1960b3;
         ">
+
           📅 Účetní období:
           ${formatDatum(datumOd)}
           –
           ${formatDatum(datumDo)}
+
         </div>
 
 
@@ -1862,7 +1962,10 @@ const objednavky = snapshot.docs.map(docSnap => ({
 
         <div style="
           display:grid;
-          grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+          grid-template-columns:repeat(
+            auto-fit,
+            minmax(200px,1fr)
+          );
           gap:15px;
         ">
 
@@ -1945,59 +2048,59 @@ const objednavky = snapshot.docs.map(docSnap => ({
 
             ${
               currentUserRole === 'admin'
-              ? `
-                <input
-                  id="pokladna-prijato"
-                  type="number"
-                  min="0"
-                  step="1"
-                  value="${prijato}"
-                  style="
-                    width:150px;
-                    box-sizing:border-box;
-                    padding:8px;
-                    font-size:24px;
+                ? `
+                  <input
+                    id="pokladna-prijato"
+                    type="number"
+                    min="0"
+                    step="1"
+                    value="${prijato}"
+                    style="
+                      width:150px;
+                      box-sizing:border-box;
+                      padding:8px;
+                      font-size:24px;
+                      font-weight:bold;
+                      text-align:center;
+                      border:2px solid #b4e6ff;
+                      border-radius:10px;
+                      color:#1960b3;
+                    "
+                  >
+
+                  <div style="
+                    margin-top:5px;
+                    font-size:14px;
+                    color:#666;
+                  ">
+                    Kč
+                  </div>
+
+                  <button
+                    id="btn-ulozit-prijato"
+                    style="
+                      margin-top:10px;
+                      padding:8px 16px;
+                      border:0;
+                      border-radius:10px;
+                      background:#1960b3;
+                      color:white;
+                      font-weight:bold;
+                      cursor:pointer;
+                    "
+                  >
+                    💾 Uložit
+                  </button>
+                `
+                : `
+                  <div style="
+                    font-size:32px;
                     font-weight:bold;
-                    text-align:center;
-                    border:2px solid #b4e6ff;
-                    border-radius:10px;
                     color:#1960b3;
-                  "
-                >
-
-                <div style="
-                  margin-top:5px;
-                  font-size:14px;
-                  color:#666;
-                ">
-                  Kč
-                </div>
-
-                <button
-                  id="btn-ulozit-prijato"
-                  style="
-                    margin-top:10px;
-                    padding:8px 16px;
-                    border:0;
-                    border-radius:10px;
-                    background:#1960b3;
-                    color:white;
-                    font-weight:bold;
-                    cursor:pointer;
-                  "
-                >
-                  💾 Uložit
-                </button>
-              `
-              : `
-                <div style="
-                  font-size:32px;
-                  font-weight:bold;
-                  color:#1960b3;
-                ">
-                  ${prijato.toLocaleString('cs-CZ')} Kč
-                </div>
-              `
+                  ">
+                    ${prijato.toLocaleString('cs-CZ')} Kč
+                  </div>
+                `
             }
 
           </div>
@@ -2021,7 +2124,11 @@ const objednavky = snapshot.docs.map(docSnap => ({
             color:#666;
             margin-bottom:8px;
           ">
-            ${jePreplatek ? '💚 Přeplatek' : '💳 Zbývá uhradit'}
+            ${
+              jePreplatek
+                ? '💚 Přeplatek'
+                : '💳 Zbývá uhradit'
+            }
           </div>
 
           <div style="
@@ -2031,6 +2138,114 @@ const objednavky = snapshot.docs.map(docSnap => ({
           ">
             ${castkaRozdilu.toLocaleString('cs-CZ')} Kč
           </div>
+
+        </div>
+
+
+        <!-- ========================================= -->
+        <!-- SEZNAM OBJEDNANÝCH OBĚDŮ -->
+        <!-- ========================================= -->
+
+        <div style="
+          margin-top:25px;
+          padding:20px;
+          background:white;
+          border-radius:14px;
+          border:1px solid #cfe8fa;
+        ">
+
+          <h3 style="
+            margin:0 0 15px 0;
+            color:#1960b3;
+            text-align:center;
+          ">
+            🍽️ Objednané obědy
+          </h3>
+
+
+          ${
+            objednavkyObdobi.length === 0
+              ? `
+                <div style="
+                  padding:15px;
+                  text-align:center;
+                  color:#777;
+                ">
+                  📭 V tomto účetním období není žádný
+                  objednaný oběd.
+                </div>
+              `
+              : `
+                <div style="
+                  display:flex;
+                  flex-direction:column;
+                  gap:8px;
+                ">
+
+                  ${
+                    objednavkyObdobi
+                      .slice()
+                      .sort((a, b) =>
+                        String(a.datum || '').localeCompare(
+                          String(b.datum || '')
+                        )
+                      )
+                      .map(obj => `
+                        <div style="
+                          display:grid;
+                          grid-template-columns:120px 1fr auto;
+                          align-items:center;
+                          gap:12px;
+                          padding:12px 14px;
+                          background:#f7fbff;
+                          border:1px solid #e2edf7;
+                          border-radius:10px;
+                        ">
+
+                          <div style="
+                            font-weight:700;
+                            color:#1960b3;
+                          ">
+                            📅 ${
+                              obj.datum
+                                ? formatDatum(obj.datum)
+                                : 'Bez data'
+                            }
+                          </div>
+
+
+                          <div style="
+                            font-size:16px;
+                            font-weight:700;
+                            color:#222;
+                          ">
+                            🍽️ ${
+                              escapeHtml(
+                                obj.nazev || 'Bez názvu'
+                              )
+                            }
+                          </div>
+
+
+                          <div style="
+                            font-weight:700;
+                            color:#28a745;
+                            white-space:nowrap;
+                          ">
+                            ${
+                              Number(obj.cena || 0)
+                                .toLocaleString('cs-CZ')
+                            } Kč
+                          </div>
+
+                        </div>
+                      `)
+                      .join('')
+                  }
+
+                </div>
+              `
+          }
 
         </div>
 
@@ -2060,55 +2275,91 @@ const objednavky = snapshot.docs.map(docSnap => ({
 
 
     // =========================================
+    // ZMĚNA UŽIVATELE - ADMIN
+    // =========================================
+
+    if (currentUserRole === 'admin') {
+
+      const selectUzivatel =
+        document.getElementById('pokladna-uzivatel');
+
+      if (selectUzivatel) {
+
+        selectUzivatel.onchange = () => {
+
+          window.pokladnaVybranyUzivatelUid =
+            selectUzivatel.value;
+
+          renderPokladna();
+
+        };
+
+      }
+
+    }
+
+
+    // =========================================
     // ULOŽENÍ PŘIJATÉ ČÁSTKY - ADMIN
     // =========================================
 
     if (currentUserRole === 'admin') {
 
-      document.getElementById('btn-ulozit-prijato').onclick =
-        async () => {
+      document.getElementById(
+        'btn-ulozit-prijato'
+      ).onclick = async () => {
 
-          try {
+        try {
 
-            const input =
-              document.getElementById('pokladna-prijato');
-
-            const novaCastka =
-              Number(input.value || 0);
-
-            await setDoc(
-              pokladnaRef,
-              {
-                obdobiOd: datumOd,
-                obdobiDo: datumDo,
-                prijato: novaCastka,
-                updatedAt: new Date(),
-                updatedByUid: currentUser?.uid || '',
-                updatedByEmail: currentUser?.email || ''
-              },
-              {
-                merge: true
-              }
+          const input =
+            document.getElementById(
+              'pokladna-prijato'
             );
 
-            alert('✅ Přijatá částka byla uložena.');
+          const novaCastka =
+            Number(input.value || 0);
 
-            renderPokladna();
 
-          } catch (error) {
+          await setDoc(
+            pokladnaRef,
+            {
+              obdobiOd: datumOd,
+              obdobiDo: datumDo,
+              prijato: novaCastka,
+              updatedAt: new Date(),
+              updatedByUid:
+                currentUser?.uid || '',
+              updatedByEmail:
+                currentUser?.email || ''
+            },
+            {
+              merge: true
+            }
+          );
 
-            console.error(
-              'CHYBA ULOŽENÍ POKLADNY:',
-              error
-            );
 
-            alert(
-              '❌ Přijatou částku se nepodařilo uložit.'
-            );
+          alert(
+            '✅ Přijatá částka byla uložena.'
+          );
 
-          }
 
-        };
+          renderPokladna();
+
+
+        } catch (error) {
+
+          console.error(
+            'CHYBA ULOŽENÍ POKLADNY:',
+            error
+          );
+
+          alert(
+            '❌ Přijatou částku se nepodařilo uložit.'
+          );
+
+        }
+
+      };
 
     }
 
@@ -2117,7 +2368,9 @@ const objednavky = snapshot.docs.map(docSnap => ({
     // TLAČÍTKO ZPĚT
     // =========================================
 
-    document.getElementById('btn-zpet-pokladna').onclick = () => {
+    document.getElementById(
+      'btn-zpet-pokladna'
+    ).onclick = () => {
 
       renderMain();
 
@@ -2132,9 +2385,10 @@ const objednavky = snapshot.docs.map(docSnap => ({
     );
 
     alert(
-  '❌ Pokladnu se nepodařilo načíst.\n\n' +
-  (error?.message || error)
-);
+      '❌ Pokladnu se nepodařilo načíst.\n\n' +
+      (error?.message || error)
+    );
+
   }
 
 };
