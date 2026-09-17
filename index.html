@@ -1382,19 +1382,6 @@ window.smazatJidelnicek = async function(jidelnicekId) {
 
     await deleteDoc(jidelnicekRef);
 
-    // Smažeme i případné objednávky navázané na toto jídlo
-    const objednavkySnapshot =
-      await getDocs(collection(db, 'objednavky'));
-
-    for (const objednavka of objednavkySnapshot.docs) {
-
-      const data = objednavka.data();
-
-      if (data.jidelnicekId === jidelnicekId) {
-        await deleteDoc(objednavka.ref);
-      }
-    }
-
     msg('✅ Položka byla z jídelníčku odstraněna.');
 
     await nactiJidelnicek();
