@@ -973,6 +973,26 @@ async function nactiJidelnicek() {
 
       if (uzJeObjednano) {
 
+        // Objednávku lze zrušit nejpozději 48 hodin před termínem.
+        // Datum jídelníčku je bez času, proto počítáme celé kalendářní dny.
+        const dnes = new Date();
+        dnes.setHours(0, 0, 0, 0);
+
+        const datumJidla = new Date(`${jidlo.datum}T00:00:00`);
+        datumJidla.setHours(0, 0, 0, 0);
+
+        const rozdilDni = Math.floor(
+          (datumJidla - dnes) / (1000 * 60 * 60 * 24)
+        );
+
+        if (rozdilDni < 2) {
+          alert(
+            '❌ Objednávku už nelze zrušit.\n\n' +
+            'Zrušení je možné nejpozději 48 hodin před termínem oběda.'
+          );
+          return;
+        }
+
         const potvrdit = confirm(
           `Zrušit objednávku "${jidlo.nazev}" na ${jidlo.datum}?`
         );
