@@ -1369,7 +1369,8 @@ window.smazatJidelnicek = async function(jidelnicekId) {
   }
 
   const potvrdit = confirm(
-    'Opravdu chceš tuto položku odstranit z jídelníčku?'
+    'Opravdu chceš tuto položku odstranit z jídelníčku?\n\n' +
+    'Pokud už si ji někdo objednal, objednávka bude také zrušena a cena oběda se vrátí do pokladny.'
   );
 
   if (!potvrdit) {
@@ -1380,9 +1381,33 @@ window.smazatJidelnicek = async function(jidelnicekId) {
 
     const jidelnicekRef = doc(db, 'jidelnicky', jidelnicekId);
 
+    // Najdeme všechny objednávky tohoto konkrétního jídla
+    const objednavkySnapshot =
+      await getDocs(collection(db, 'objednavky'));
+
+    let pocetZrusenychObjednavek = 0;
+
+    for (const objednavka of objednavkySnapshot.docs) {
+
+      const data = objednavka.data();
+
+      if (data.jidelnicekId === jidelnicekId) {
+
+        await deleteDoc(objednavka.ref);
+
+        pocetZrusenychObjednavek++;
+      }
+    }
+
+    // Teprve potom smažeme položku z jídelníčku
     await deleteDoc(jidelnicekRef);
 
-    msg('✅ Položka byla z jídelníčku odstraněna.');
+    msg(
+      `✅ Položka byla odstraněna.` +
+      (pocetZrusenychObjednavek > 0
+        ? ` Zrušeno objednávek: ${pocetZrusenychObjednavek}. Peníze se vrátily do pokladny.`
+        : '')
+    );
 
     await nactiJidelnicek();
 
