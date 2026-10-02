@@ -773,10 +773,34 @@ async function nactiJidelnicek() {
       return;
     }
 
-    const jidelnicky = snapshot.docs.map(docSnap => ({
+    const jidelnickyVsechny = snapshot.docs.map(docSnap => ({
       id: docSnap.id,
       ...docSnap.data()
     }));
+
+    // V jídelníčku zobrazujeme pouze dnešek a budoucí dny.
+    // Starší dny ale zůstávají v databázi kvůli historii objednávek a pokladně.
+    const dnes = new Date();
+    const dnesIso =
+      `${dnes.getFullYear()}-${String(dnes.getMonth() + 1).padStart(2, '0')}-${String(dnes.getDate()).padStart(2, '0')}`;
+
+    const jidelnicky = jidelnickyVsechny.filter(jidlo =>
+      String(jidlo.datum || '') >= dnesIso
+    );
+
+    if (jidelnicky.length === 0) {
+      container.innerHTML = `
+        <div style="
+          padding:15px;
+          background:#eef8ff;
+          border-radius:10px;
+          text-align:center;
+        ">
+          📅 Aktuálně není vytvořen žádný dnešní ani budoucí jídelníček.
+        </div>
+      `;
+      return;
+    }
 
     // Seřadíme podle data
     jidelnicky.sort((a, b) => {
@@ -1388,45 +1412,66 @@ window.smazatJidelnicek = async function(jidelnicekId) {
     return;
   }
 
-  const potvrdit = confirm(
-    'Opravdu chceš tuto položku odstranit z jídelníčku?\n\n' +
-    'Pokud už si ji někdo objednal, objednávka bude také zrušena a cena oběda se vrátí do pokladny.'
-  );
-
-  if (!potvrdit) {
-    return;
-  }
-
   try {
 
     const jidelnicekRef = doc(db, 'jidelnicky', jidelnicekId);
+    const jidelnicekDoc = await getDoc(jidelnicekRef);
 
-    // Najdeme všechny objednávky tohoto konkrétního jídla
-    const objednavkySnapshot =
-      await getDocs(collection(db, 'objednavky'));
+    if (!jidelnicekDoc.exists()) {
+      alert('❌ Položka jídelníčku nebyla nalezena.');
+      return;
+    }
+
+    const jidlo = jidelnicekDoc.data();
+
+    // Starší dny jsou pouze historická data. Jejich smazání z přehledu
+    // nesmí odstranit objednávky ani změnit historickou pokladnu.
+    const dnes = new Date();
+    const dnesIso =
+      `${dnes.getFullYear()}-${String(dnes.getMonth() + 1).padStart(2, '0')}-${String(dnes.getDate()).padStart(2, '0')}`;
+    const jeDnesNeboBudoucnost = String(jidlo.datum || '') >= dnesIso;
+
+    const potvrdit = confirm(
+      jeDnesNeboBudoucnost
+        ? 'Opravdu chceš tuto položku odstranit z jídelníčku?\n\n' +
+          'Objednávky na dnešní nebo budoucí jídlo budou také zrušeny a jejich cena se odečte z pokladny.'
+        : 'Opravdu chceš tuto starší položku odstranit z jídelníčku?\n\n' +
+          'Historické objednávky zůstanou zachované a pokladna se nezmění.'
+    );
+
+    if (!potvrdit) {
+      return;
+    }
 
     let pocetZrusenychObjednavek = 0;
 
-    for (const objednavka of objednavkySnapshot.docs) {
+    // Objednávky mažeme pouze u dnešních a budoucích jídel.
+    if (jeDnesNeboBudoucnost) {
+      const objednavkySnapshot =
+        await getDocs(collection(db, 'objednavky'));
 
-      const data = objednavka.data();
+      for (const objednavka of objednavkySnapshot.docs) {
 
-      if (data.jidelnicekId === jidelnicekId) {
+        const data = objednavka.data();
 
-        await deleteDoc(objednavka.ref);
-
-        pocetZrusenychObjednavek++;
+        if (data.jidelnicekId === jidelnicekId) {
+          await deleteDoc(objednavka.ref);
+          pocetZrusenychObjednavek++;
+        }
       }
     }
 
-    // Teprve potom smažeme položku z jídelníčku
+    // Samotný jídelníček můžeme odstranit vždy; u starého dne tím
+    // nemažeme historické objednávky.
     await deleteDoc(jidelnicekRef);
 
     msg(
       `✅ Položka byla odstraněna.` +
       (pocetZrusenychObjednavek > 0
-        ? ` Zrušeno objednávek: ${pocetZrusenychObjednavek}. Peníze se vrátily do pokladny.`
-        : '')
+        ? ` Zrušeno objednávek: ${pocetZrusenychObjednavek}. Cena se odečetla z pokladny.`
+        : !jeDnesNeboBudoucnost
+          ? ' Historické objednávky a pokladna zůstaly beze změny.'
+          : '')
     );
 
     await nactiJidelnicek();
